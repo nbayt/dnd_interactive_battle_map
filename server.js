@@ -79,6 +79,11 @@ io.on('connection', function (socket) {
     dmChars[enemyData.id].y = enemyData.y;
     socket.broadcast.emit('enemyUpdated', dmChars[enemyData.id]);
   });
+  socket.on('enemyDelete', function(enemyData){
+    toDelete = dmChars[enemyData.enemyId];
+    delete dmChars[enemyData.enemyId];
+    socket.broadcast.emit('enemyDeleted', toDelete);
+  });
   socket.on('setEnemyVisibility', function(data){
     socket.broadcast.emit('setEnemyVisibility', data);
   });

@@ -106,6 +106,15 @@ function create() {
       });
     }
   });
+  this.socket.on('enemyDelete', function(enemyInfo){
+    self.enemies.getChildren().forEach(function(enemy){
+      if(enemy.id === enemyInfo && manager.deleteMode==true){
+        manager.deleteMode=false;
+        enemy.destroy();
+        console.log("Deleted: " + enemy.id);
+      }
+    });
+  });
   this.socket.on('setEnemyVisibility', function(data){
     if(!DM) {
       self.enemies.getChildren().forEach(function(enemy){
@@ -116,7 +125,7 @@ function create() {
   // End update callbacks.
 
   this.socket.on('disconnect', function (playerId) {
-    self.otherPlayers.getChildren().forEach(function (otherPlayer) {
+    self.otherPlayers.getChildren().forEach(function(otherPlayer) {
       if (playerId === otherPlayer.playerId) {
         otherPlayer.destroy();
       }
@@ -136,6 +145,11 @@ function create() {
       for(var i=0;i<manager.enemies.getChildren().length;i++){
         var enemy = manager.enemies.getChildren()[i];
         if(distance(enemy.x,pointer.x,enemy.y,pointer.y)<40){
+          if(manager.deleteMode){
+            manager.deleteMode=false;
+            enemy.destroy();
+            manager.socket.emit('ememyDelete',{enemyId: enemy.id})
+          }
           enemy.followMouse = true;
           break;
         }
@@ -247,7 +261,15 @@ function showEnemies(){
   manager.socket.emit('setEnemyVisibility',{alpha:1.0});
 }
 // Create an enemy at the given x,y position.
-// TODO implement size to use different sprite classes. 
+// TODO implement size to use different sprite classes.
+function deleteEnemy(){
+  if(!manager.deleteMode){
+    manager.deleteMode=true;
+  }
+  else{
+    manager.deleteMode=false;
+  }
+}
 function createEnemy(x,y,size){
   var id = manager.enemies.getChildren().length;
   var enemy_container = createEnemyHelper(x,y,size,id);
