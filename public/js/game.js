@@ -19,6 +19,15 @@ var config = {
 var game = new Phaser.Game(config);
 var manager; // To add global ref. !VERY SAFE! :ok_handSign:
 
+const colors = {
+  'green': 0x00FF00,
+  'blue': 0x0000FF,
+  'orange': 0xFF8000,
+  'light_blue': 0x00FFFF,
+  'yellow': 0xFFFF00,
+  'pink': 0x00FFFF
+}
+
 function preload() {
   this.load.image('char_base', 'assets/char_base.png')
   this.load.image('bg_00', 'assets/bg_00.png')
