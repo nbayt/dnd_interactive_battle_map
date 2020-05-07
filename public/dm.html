@@ -59,12 +59,14 @@
               <input type="submit" value="Update">
             </form>
             <h2>DM Controls</h2>
-            <button type="button" name="hide_all_enemies" onclick="temp()">Hide Enemies</button>
-            <button type="button" name="show_all_enemies">Show Enemies</button>
+            <button type="button" name="hide_all_enemies" onclick="hideEnemies()">Hide Enemies</button>
+            <button type="button" name="hide_all_enemies" onclick="showEnemies()">Show Enemies</button><br>
+            <button type="button" name="hide_all_enemies" onclick="createEnemy(80,80,'medium')">Create Enemy</button>
           </div>
         </div>
         <script src="/socket.io/socket.io.js"></script>
         <script src="//cdn.jsdelivr.net/npm/phaser@3.23.0/dist/phaser.min.js"></script>
         <script src="js/game.js"></script>
+        <script src="js/dm.js"></script>
     </body>
 </html>

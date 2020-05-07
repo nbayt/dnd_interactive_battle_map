@@ -3,7 +3,7 @@ var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io').listen(server)
 var players = {}
-var dm_chars = {}
+var dmChars = {}
 
 app.use(express.static(__dirname + '/public'));
 
@@ -30,6 +30,7 @@ io.on('connection', function (socket) {
   };
   // send the players object to the new player
   socket.emit('currentPlayers', players);
+  socket.emit('currentDMChars', dmChars);
   // update all other players of the new player
   socket.broadcast.emit('newPlayer', players[socket.id]);
 
@@ -61,6 +62,24 @@ io.on('connection', function (socket) {
     players[socket.id].color = data.color;
     socket.broadcast.emit('playerColorUpdated', players[socket.id]);
     console.log(`Player: ${socket.id} updated color to: ${data.color}.`);
+  });
+
+  // DM updates
+  socket.on('enemyCreate', function(enemyData){
+    dmChars[enemyData.id]={
+      x: enemyData.x,
+      y: enemyData.y,
+      alpha: enemyData.alpha,
+      size: enemyData.size,
+      id: enemyData.id
+    };
+    socket.broadcast.emit('enemyCreated', enemyData);
+  });
+  socket.on('enemyUpdate', function(enemyData){
+    dmChars[enemyData.id].x = enemyData.x;
+    dmChars[enemyData.id].y = enemyData.y;
+    dmChars[enemyData.id].alpha = enemyData.alpha;
+    socket.broadcast.emit('enemyUpdated', dmChars[enemyData.id]);
   });
 });
 

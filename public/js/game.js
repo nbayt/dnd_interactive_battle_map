@@ -35,11 +35,13 @@ function preload() {
 }
 
 function create() {
+  console.log(DM);
   var self = this;
   manager = this;
   this.add.image(0, 0, 'bg_00').setOrigin(0).setScale(0.8);
   this.socket = io();
   this.otherPlayers = this.physics.add.group();
+  this.enemies = this.physics.add.group(); // For client storage.
 
   this.socket.on('currentPlayers', function(players){
     Object.keys(players).forEach(function(id){
@@ -78,6 +80,35 @@ function create() {
       }
     });
   });
+  this.socket.on('enemyCreated',function(enemyInfo){
+    if(!DM){
+      var enemy_container = createEnemyHelper(enemyInfo.x, enemyInfo.y, enemyInfo.size, enemyInfo.id);
+      manager.enemies.add(enemy_container);
+      console.log('Creating new enemy from server.');
+    }
+  });
+  this.socket.on('currentDMChars',function(enemiesInfo){
+    if(enemiesInfo){
+      console.log(JSON.stringify(enemiesInfo));
+      Object.keys(enemiesInfo).forEach(function(id){
+        var enemyInfo = enemiesInfo[id];
+        console.log(JSON.stringify(enemyInfo));
+        var enemy_container = createEnemyHelper(enemyInfo.x, enemyInfo.y, enemyInfo.size, enemyInfo.id);
+        manager.enemies.add(enemy_container);
+      });
+    }
+  });
+  this.socket.on('enemyUpdated',function(enemyInfo){
+    if(!DM){
+      self.enemies.getChildren().forEach(function(enemy){
+        if(enemy.id === enemyInfo.id){
+          console.log(enemy.id);
+          enemy.setPosition(enemyInfo.x, enemyInfo.y);
+          enemy.alpha = enemyInfo.alpha;
+        }
+      });
+    }
+  });
   // End update callbacks.
 
   this.socket.on('disconnect', function (playerId) {
@@ -94,15 +125,34 @@ function create() {
     if(this.tile && distance(this.tile.x,pointer.x,this.tile.y,pointer.y)<40){
       this.tile.followMouse = true;
     }
+    else if(DM){
+      for(var i=0;i<manager.enemies.getChildren().length;i++){
+        var enemy = manager.enemies.getChildren()[i];
+        if(distance(enemy.x,pointer.x,enemy.y,pointer.y)<40){
+          enemy.followMouse = true;
+          break;
+        }
+      }
+    }
   }, this);
   this.input.on('pointerup',function(pointer){
     if(this.tile){
       this.tile.followMouse = false;
     }
+    manager.enemies.getChildren().forEach(function(enemy){
+      enemy.followMouse = false;
+    });
   }, this);
   this.input.on('pointermove',function(pointer){
     if(this.tile && this.tile.followMouse === true){
       this.tile.setPosition(pointer.x, pointer.y)
+    }
+    if(DM){
+      manager.enemies.getChildren().forEach(function(enemy){
+        if(enemy.followMouse){
+          enemy.setPosition(pointer.x,pointer.y);
+        }
+      });
     }
   }, this);
 }
@@ -123,6 +173,24 @@ function update() {
       y: this.tile.y,
       rotation: this.tile.rotation
     };
+  }
+  if(DM){
+    manager.enemies.getChildren().forEach(function(enemy){
+      var x = enemy.x;
+      var y = enemy.y;
+      var a = enemy.alpha;
+      // If moved then update server.
+      if (enemy.oldPosition && (x !== enemy.oldPosition.x || y !== enemy.oldPosition.y || a !== enemy.oldPosition.alpha)) {
+        console.log(JSON.stringify({x: x, y: y, alpha: a, id: enemy.id}));
+        manager.socket.emit('enemyUpdate', {x: x, y: y, alpha: a, id: enemy.id});
+      }
+      // Save old pos data.
+      enemy.oldPosition = {
+        x: x,
+        y: y,
+        alpha: a
+      };
+    });
   }
 }
 
@@ -173,6 +241,24 @@ function hideEnemies(){
 }
 function showEnemies(){
   console.log('TODO');
+}
+function createEnemy(x,y,size){
+  var id = manager.enemies.getChildren().length;
+  var enemy_container = createEnemyHelper(x,y,size,id);
+  manager.enemies.add(enemy_container);
+  manager.socket.emit('enemyCreate',{x: enemy_container.x, y: enemy_container.y, alpha: enemy_container.alpha, size: size, id: id});
+}
+function createEnemyHelper(x,y,size,id){
+  var enemy = manager.physics.add.image(0,0, 'char_base').setOrigin(0.5,0.5).setDisplaySize(40, 40);
+  enemy.setTint(colors['red']);
+  var text = manager.add.text(0,0,id);
+  text.style.setFont("Arial");
+  text.style.setFontSize('20px');
+  text.style.setColor('black');
+  text.setOrigin(0.5, 0.5);
+  var enemy_container = manager.add.container(x, y,[enemy,text]);
+  enemy_container.id = id;
+  return enemy_container;
 }
 // End DM Tools.
 
