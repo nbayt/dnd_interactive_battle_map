@@ -1,8 +1,8 @@
 var config = {
   type: Phaser.AUTO,
   parent: 'game',
-  width: 1548,
-  height: 1546,
+  width: 1500,
+  height: 2200,
   physics: {
     default: 'arcade',
     arcade: {
@@ -18,7 +18,9 @@ var config = {
 };
 var game = new Phaser.Game(config);
 var manager; // To add global ref. !VERY SAFE! :ok_handSign:
+var nextEnemyID = 0;
 
+// TODO auto populate html with this list.
 const colors = {
   'green': 0x00FF00,
   'blue': 0x0000FF,
@@ -26,12 +28,20 @@ const colors = {
   'light_blue': 0x00FFFF,
   'yellow': 0xFFFF00,
   'pink': 0xFF00FF,
+  'teal': 0x008080,
+  'forest_green': 0x228B22,
+  'peru': 0xCD853F,
+  'pale_green': 0x98FB98,
   'red': 0xFF0000
 }
 
 function preload() {
-  this.load.image('char_base', 'assets/char_base.png')
-  this.load.image('bg_00', 'assets/bg_00.png')
+  this.load.image('char_base', 'assets/pawn.png')
+  this.load.image('bg', 'assets/bg_01.png');
+
+  this.load.image('enemy_small', 'assets/enemy_small.png');
+  this.load.image('enemy_medium', 'assets/enemy_medium.png');
+  this.load.image('enemy_large', 'assets/enemy_large.png');
 
   // Setup map list TODO
   if(DM){
@@ -47,7 +57,7 @@ function create() {
   console.log(DM);
   var self = this;
   manager = this;
-  this.add.image(0, 0, 'bg_00').setOrigin(0).setScale(0.8);
+  this.add.image(-200, -200, 'bg').setOrigin(0).setScale(0.8);
   this.socket = io();
 
   // For client storage.
@@ -99,7 +109,7 @@ function create() {
       console.log('Creating new enemy from server.');
     }
   });
-  this.socket.on('currentDMChars',function(enemiesInfo){
+  this.socket.on('currentDMEnemies',function(enemiesInfo){
     if(enemiesInfo){
       Object.keys(enemiesInfo).forEach(function(id){
         var enemyInfo = enemiesInfo[id];
@@ -275,14 +285,25 @@ function deleteEnemy(){
 // Create an enemy at the given x,y position.
 // TODO implement size to use different sprite classes.
 function createEnemy(x,y,size){
-  var id = manager.enemies.getChildren().length;
+  var id = nextEnemyID;
+  nextEnemyID++;
   var enemy_container = createEnemyHelper(x,y,size,id);
   manager.enemies.add(enemy_container);
   manager.socket.emit('enemyCreate',{x: enemy_container.x, y: enemy_container.y, alpha: enemy_container.alpha, size: size, id: id});
 }
 function createEnemyHelper(x,y,size,id){
-  var enemy = manager.physics.add.image(0,0, 'char_base').setOrigin(0.5,0.5).setDisplaySize(40, 40);
-  enemy.setTint(colors['red']);
+  var enemy;
+  if(size === 'small'){
+    enemy = manager.physics.add.image(0,0, 'enemy_small').setOrigin(0.5,0.5).setDisplaySize(40, 40);
+  }
+  else if (size === 'medium'){
+    enemy = manager.physics.add.image(0,0, 'enemy_medium').setOrigin(0.5,0.5).setDisplaySize(50, 50);
+  }
+  else if(size === 'large'){
+    enemy = manager.physics.add.image(0,0, 'enemy_large').setOrigin(0.5,0.5).setDisplaySize(100, 100);
+  }
+
+  //enemy.setTint(colors['red']);
   var text = manager.add.text(0,0,id);
   text.style.setFont("Arial");
   text.style.setFontSize('20px');

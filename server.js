@@ -3,7 +3,7 @@ var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io').listen(server)
 var players = {}
-var dmChars = {}
+var dmEnemies = {}
 const port = 25565;
 
 app.use(express.static(__dirname + '/public'));
@@ -23,15 +23,15 @@ io.on('connection', function (socket) {
   // TODO move to client side.
   players[socket.id] = {
     rotation: 0,
-    x: Math.floor(Math.random() * 700) + 50,
-    y: Math.floor(Math.random() * 500) + 50,
+    x: Math.floor(Math.random() * 100) + 500,
+    y: Math.floor(Math.random() * 100) + 500,
     playerId: socket.id,
     name: 'Unnamed Hollow',
     color: 'green'
   };
   // Send the players object to the new player.
   socket.emit('currentPlayers', players);
-  socket.emit('currentDMChars', dmChars);
+  socket.emit('currentDMEnemies', dmEnemies);
   // Update all other players of the new player.
   socket.broadcast.emit('newPlayer', players[socket.id]);
   // End new player creation.
@@ -64,7 +64,7 @@ io.on('connection', function (socket) {
 
   // DM updates
   socket.on('enemyCreate', function(enemyData){
-    dmChars[enemyData.id]={
+    dmEnemies[enemyData.id]={
       x: enemyData.x,
       y: enemyData.y,
       alpha: enemyData.alpha,
@@ -74,13 +74,13 @@ io.on('connection', function (socket) {
     socket.broadcast.emit('enemyCreated', enemyData);
   });
   socket.on('enemyUpdate', function(enemyData){
-    dmChars[enemyData.id].x = enemyData.x;
-    dmChars[enemyData.id].y = enemyData.y;
-    socket.broadcast.emit('enemyUpdated', dmChars[enemyData.id]);
+    dmEnemies[enemyData.id].x = enemyData.x;
+    dmEnemies[enemyData.id].y = enemyData.y;
+    socket.broadcast.emit('enemyUpdated', dmEnemies[enemyData.id]);
   });
   socket.on('enemyDelete', function(enemyData){
-    toDelete = dmChars[enemyData.enemyId];
-    delete dmChars[enemyData.enemyId];
+    toDelete = dmEnemies[enemyData.enemyId];
+    delete dmEnemies[enemyData.enemyId];
     socket.broadcast.emit('enemyDeleted', {id: enemyData.enemyId});
     console.log(`Enemy ${enemyData.enemyId} deleted.`);
   });
@@ -88,6 +88,7 @@ io.on('connection', function (socket) {
     socket.broadcast.emit('setEnemyVisibility', data);
   });
 });
+// End DM Updates
 
 server.listen(port, function () {
   console.log(`Listening on ${server.address().port}`);

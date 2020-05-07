@@ -13,22 +13,24 @@
           }
 
           #wrapper {
-            width:2000;
+            width:1600;
             border: 1px solid black;
-            overflow: hidden;
+            overflow: scroll;
           }
 
           #game {
             margin: 10px ;
             padding: 0;
-            width: 1548px;
+            width: 1500;
             height: 1546px;
             float: left;
+            border: 1px solid black;
           }
 
           #ui {
             border: 1px dashed black;
-            overflow: hidden;
+            overflow: right;
+            float: left;
           }
         </style>
     </head>
@@ -54,6 +56,10 @@
                 <option value="light_blue">Light Blue</option>
                 <option value="yellow">Yellow</option>
                 <option value="pink">Pink</option>
+                <option value="teal">Teal</option>
+                <option value="forest_green">Forest Green</option>
+                <option value="peru">Peru</option>
+                <option value="pale_green">Pale Green</option>
               </select>
               <input type="submit" value="Update">
             </form>
@@ -67,7 +73,10 @@
             </form>
             <button type="button" name="hide_all_enemies" onclick="hideEnemies()">Hide Enemies</button>
             <button type="button" name="show_all_enemies" onclick="showEnemies()">Show Enemies</button><br>
-            <button type="button" name="create_enemy" onclick="createEnemy(80,80,'medium')">Create Enemy</button>
+            <!-- TODO make this a drop down or something cleaner -->
+            <button type="button" name="create_enemy" onclick="createEnemy(500,500,'small')">Create Small Enemy</button>
+            <button type="button" name="create_enemy" onclick="createEnemy(500,500,'medium')">Create Medium Enemy</button>
+            <button type="button" name="create_enemy" onclick="createEnemy(500,500,'large')">Create Large Enemy</button><br>
             <button type="button" name="delete_enemy" onclick="deleteEnemy()">Delete Enemy</button><br>
           </div>
         </div>
