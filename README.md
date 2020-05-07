@@ -13,11 +13,12 @@ Run `npm install` to init modules and run with `node server.js`.
 ### TODO - Smaller Steps
  - User Tools
    - [x] Change name.
-   - [ ] Change color.
+   - [x] Change color.
    - [ ] Basic stats pull from google sheets.
  - DM Tools
-   - [ ] Create DM admin page.
+   - [x] Create DM admin page.
    - [ ] Easy map import for on the fly changes.
    - [ ] Add enemies.
+   - [ ] Hide and show enemies.
    - [ ] Draw circles and boxes for skill zones.
    - [ ] Buff/debuff icons.

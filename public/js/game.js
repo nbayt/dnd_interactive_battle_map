@@ -25,7 +25,8 @@ const colors = {
   'orange': 0xFF8000,
   'light_blue': 0x00FFFF,
   'yellow': 0xFFFF00,
-  'pink': 0x00FFFF
+  'pink': 0xFF00FF,
+  'red': 0xFF0000
 }
 
 function preload() {
@@ -67,6 +68,13 @@ function create() {
     self.otherPlayers.getChildren().forEach(function(otherPlayer){
       if(playerInfo.playerId === otherPlayer.playerId){
         otherPlayer.getAt(1).text = playerInfo.name;
+      }
+    });
+  });
+  this.socket.on('playerColorUpdated',function(playerInfo){
+    self.otherPlayers.getChildren().forEach(function(otherPlayer){
+      if(playerInfo.playerId === otherPlayer.playerId){
+        otherPlayer.getAt(0).setTint(colors[playerInfo.color]);
       }
     });
   });
@@ -120,39 +128,31 @@ function update() {
 
 function addPlayer(self, playerInfo){
   var tile = self.physics.add.image(0,0, 'char_base').setOrigin(0.5,0.5).setDisplaySize(40, 40);
-  if(playerInfo.team === 'blue'){
-    tile.setTint(0x0000FF);
-  }
-  else{
-    tile.setTint(0xFF0000);
-  }
-  var text = self.add.text(0,-27,playerInfo.name);
-  text.style.setFont("Arial");
-
-  text.style.setFontSize('20px');
-  text.style.setColor('black');
-  text.setOrigin(0.5, 0.5);
+  tile.setTint(colors[playerInfo.color]);
+  var text = createPlayerTextLabel(self, playerInfo.name);
   self.tile = self.add.container(playerInfo.x, playerInfo.y,[tile,text]);
 }
 
 function addOtherPlayers(self, playerInfo){
   const otherPlayer = self.add.sprite(0,0, 'char_base').setOrigin(0.5,0.5).setDisplaySize(40, 40);
-  if(playerInfo.team === 'blue'){
-    otherPlayer.setTint(0x0000FF);
-  }
-  else{
-    otherPlayer.setTint(0xFF0000);
-  }
-  var text = self.add.text(0,-27,playerInfo.name);
-  text.style.setFont("Arial");
-  text.style.setFontSize('20px');
-  text.style.setColor('black');
-  text.setOrigin(0.5, 0.5);
+  otherPlayer.setTint(colors[playerInfo.color]);
+  var text = createPlayerTextLabel(self, playerInfo.name);
   const otherTile = self.add.container(playerInfo.x, playerInfo.y,[otherPlayer,text]);
   otherTile.playerId = playerInfo.playerId;
   self.otherPlayers.add(otherTile);
 }
 
+function createPlayerTextLabel(self, label){
+  var text = self.add.text(0,-27,label);
+  text.style.setFont("Arial");
+
+  text.style.setFontSize('20px');
+  text.style.setColor('black');
+  text.setOrigin(0.5, 0.5);
+  return text;
+}
+
+// Client Tools.
 function updateName(form){
   var new_name = form[0].value
   manager.tile.getAt(1).text = new_name;
@@ -160,8 +160,21 @@ function updateName(form){
 }
 
 function updateColor(form){
-  console.log("Nothing!");
+  var new_color = form[0].value
+  manager.tile.getAt(0).setTint(colors[new_color]);
+  manager.socket.emit('playerColorUpdate',{color: new_color});
 }
+// End Client Tools.
+
+// DM TOOLS.
+function hideEnemies(){
+  //self.tile.alpha = 0; - TODO use for DM enemies
+  console.log('TODO');
+}
+function showEnemies(){
+  console.log('TODO');
+}
+// End DM Tools.
 
 function distance(x1,x2,y1,y2){
   return Math.sqrt(Math.pow(x2-x1,2)+Math.pow(y2-y1,2));

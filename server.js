@@ -3,6 +3,7 @@ var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io').listen(server)
 var players = {}
+var dm_chars = {}
 
 app.use(express.static(__dirname + '/public'));
 
@@ -10,8 +11,12 @@ app.get('/', function (req, res) {
   res.sendFile(__dirname + '/index.html');
 });
 
+app.get('/dm', function (req, res) {
+  res.sendFile(__dirname + '/public/dm.html');
+});
+
 io.on('connection', function (socket) {
-  console.log('a user connected');
+  console.log('A user connected.');
 
   // create a new player and add it to our players object
   players[socket.id] = {
@@ -20,8 +25,8 @@ io.on('connection', function (socket) {
     y: Math.floor(Math.random() * 500) + 50,
     playerId: socket.id,
     name: 'Unnamed Hollow',
-    color: null,
-    team: (Math.floor(Math.random() * 2) == 0) ? 'red' : 'blue'
+    color: 'green'
+    //team: (Math.floor(Math.random() * 2) == 0) ? 'red' : 'blue'
   };
   // send the players object to the new player
   socket.emit('currentPlayers', players);
@@ -50,6 +55,12 @@ io.on('connection', function (socket) {
     players[socket.id].name = nameData.name;
     socket.broadcast.emit('playerNameUpdated', players[socket.id]);
     console.log(`Player: ${socket.id} updated name to: ${nameData.name}.`);
+  });
+  // Update color of player and notify clients.
+  socket.on('playerColorUpdate', function(data){
+    players[socket.id].color = data.color;
+    socket.broadcast.emit('playerColorUpdated', players[socket.id]);
+    console.log(`Player: ${socket.id} updated color to: ${data.color}.`);
   });
 });
 

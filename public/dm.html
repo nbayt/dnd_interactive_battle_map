@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>DnD Battle Board - DM</title>
+        <style>
+          html,
+          body {
+            margin: 0 auto;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+          }
+
+          #wrapper {
+            width:2000;
+            border: 1px solid black;
+            overflow: hidden;
+          }
+
+          #game {
+            margin: 10px ;
+            padding: 0;
+            width: 1548px;
+            height: 1546px;
+            float: left;
+          }
+
+          #ui {
+            border: 1px dashed black;
+            overflow: hidden;
+          }
+        </style>
+    </head>
+
+    <body>
+        <h1>temp</h1>
+        <p>これはテストテクストブロックです。</p>
+        <noscript>Please enable JavaScript to run this app.</noscript>
+        <div id="wrapper">
+          <div id="game"></div>
+          <div id="ui">
+            <h2>Controls</h2>
+            <form action="javascript:;" onsubmit="updateName(this)">
+              <label for="update_name">Update name:</label>
+              <input type="text" id="update_name">
+              <input type="submit" value="Update">
+            </form>
+            <form action="javascript:;" onsubmit="updateColor(this)">
+              <label for="update_color">Update color(TD):</label>
+              <select id="update_color">
+                <option value="blue">Blue</option>
+                <option value="green">Green</option>
+                <option value="orange">Orange</option>
+                <option value="light_blue">Light Blue</option>
+                <option value="yellow">Yellow</option>
+                <option value="pink">Pink</option>
+              </select>
+              <input type="submit" value="Update">
+            </form>
+            <h2>DM Controls</h2>
+            <button type="button" name="hide_all_enemies" onclick="temp()">Hide Enemies</button>
+            <button type="button" name="show_all_enemies">Show Enemies</button>
+          </div>
+        </div>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="//cdn.jsdelivr.net/npm/phaser@3.23.0/dist/phaser.min.js"></script>
+        <script src="js/game.js"></script>
+    </body>
+</html>
