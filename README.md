@@ -6,8 +6,8 @@ Run `npm install` to init modules and run with `node server.js`.
 
 ## TODO
  - [ ] Update comments.
- - [ ] User tools and interface.
- - [ ] DM page for admin usage.
+ - [x] User tools and interface.
+ - [x] DM page for admin usage.
  - [ ] CSS.
 
 ### TODO - Smaller Steps
@@ -18,7 +18,7 @@ Run `npm install` to init modules and run with `node server.js`.
  - DM Tools
    - [x] Create DM admin page.
    - [ ] Easy map import for on the fly changes.
-   - [ ] Add enemies.
+   - [x] Add enemies.
    - [x] Hide and show enemies.
    - [x] Delete Enemies.
    - [ ] Draw circles and boxes for skill zones.

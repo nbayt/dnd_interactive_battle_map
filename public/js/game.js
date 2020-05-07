@@ -32,6 +32,15 @@ const colors = {
 function preload() {
   this.load.image('char_base', 'assets/char_base.png')
   this.load.image('bg_00', 'assets/bg_00.png')
+
+  // Setup map list TODO
+  if(DM){
+    var str = '';
+    for(var i=0;i<5;i++){
+      str+=`<option value="0${i}">0${i}</option>`;
+    }
+    document.getElementById("set_map").innerHTML = str;
+  }
 }
 
 function create() {
@@ -40,9 +49,12 @@ function create() {
   manager = this;
   this.add.image(0, 0, 'bg_00').setOrigin(0).setScale(0.8);
   this.socket = io();
-  this.otherPlayers = this.physics.add.group();
-  this.enemies = this.physics.add.group(); // For client storage.
 
+  // For client storage.
+  this.otherPlayers = this.physics.add.group();
+  this.enemies = this.physics.add.group();
+
+  // Init all current players.
   this.socket.on('currentPlayers', function(players){
     Object.keys(players).forEach(function(id){
       if(players[id].playerId === self.socket.id){
@@ -61,11 +73,11 @@ function create() {
   this.socket.on('playerMoved',function(playerInfo){
     self.otherPlayers.getChildren().forEach(function(otherPlayer){
       if(playerInfo.playerId === otherPlayer.playerId){
-        otherPlayer.setRotation(playerInfo.rotation)
         otherPlayer.setPosition(playerInfo.x, playerInfo.y);
       }
     });
   });
+  // We can roll these two into a singular socket.
   this.socket.on('playerNameUpdated',function(playerInfo){
     self.otherPlayers.getChildren().forEach(function(otherPlayer){
       if(playerInfo.playerId === otherPlayer.playerId){
@@ -100,18 +112,17 @@ function create() {
     if(!DM){
       self.enemies.getChildren().forEach(function(enemy){
         if(enemy.id === enemyInfo.id){
-          console.log(enemy.id);
+          //console.log(enemy.id);
           enemy.setPosition(enemyInfo.x, enemyInfo.y);
         }
       });
     }
   });
-  this.socket.on('enemyDelete', function(enemyInfo){
+  this.socket.on('enemyDeleted', function(enemyData){
     self.enemies.getChildren().forEach(function(enemy){
-      if(enemy.id === enemyInfo && manager.deleteMode==true){
-        manager.deleteMode=false;
+      if(enemy.id === enemyData.id){
         enemy.destroy();
-        console.log("Deleted: " + enemy.id);
+        console.log(`Deleted enemy: ${enemyData.id}.`);
       }
     });
   });
@@ -133,10 +144,8 @@ function create() {
   });
 
   // Client input callbacks.
-
   //this.input.keyboard.on('keydown-A', function(){}, this);
-
-  this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+  //this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
   this.input.on('pointerdown', function(pointer){
     if(this.tile && distance(this.tile.x,pointer.x,this.tile.y,pointer.y)<40){
       this.tile.followMouse = true;
@@ -147,8 +156,9 @@ function create() {
         if(distance(enemy.x,pointer.x,enemy.y,pointer.y)<40){
           if(manager.deleteMode){
             manager.deleteMode=false;
+            var id = enemy.id;
             enemy.destroy();
-            manager.socket.emit('ememyDelete',{enemyId: enemy.id})
+            manager.socket.emit('enemyDelete',{enemyId: id});
           }
           enemy.followMouse = true;
           break;
@@ -181,17 +191,14 @@ function update() {
   if (this.tile) {
     var x = this.tile.x;
     var y = this.tile.y;
-    var r = this.tile.rotation;
     // If moved then update server.
-    if (this.tile.oldPosition && (x !== this.tile.oldPosition.x || y !== this.tile.oldPosition.y || r !== this.tile.oldPosition.rotation)) {
-      this.socket.emit('playerMovement', { x: this.tile.x, y: this.tile.y, rotation: this.tile.rotation });
+    if (this.tile.oldPosition && (x !== this.tile.oldPosition.x || y !== this.tile.oldPosition.y)) {
+      this.socket.emit('playerMovement', {x: this.tile.x, y: this.tile.y});
     }
-
     // Save old pos data.
     this.tile.oldPosition = {
       x: this.tile.x,
-      y: this.tile.y,
-      rotation: this.tile.rotation
+      y: this.tile.y
     };
   }
   if(DM){
@@ -203,10 +210,7 @@ function update() {
         manager.socket.emit('enemyUpdate', {x: x, y: y, id: enemy.id});
       }
       // Save old pos data.
-      enemy.oldPosition = {
-        x: x,
-        y: y
-      };
+      enemy.oldPosition = {x: x, y: y};
     });
   }
 }
@@ -230,7 +234,6 @@ function addOtherPlayers(self, playerInfo){
 function createPlayerTextLabel(self, label){
   var text = self.add.text(0,-27,label);
   text.style.setFont("Arial");
-
   text.style.setFontSize('20px');
   text.style.setColor('black');
   text.setOrigin(0.5, 0.5);
@@ -260,8 +263,7 @@ function hideEnemies(){
 function showEnemies(){
   manager.socket.emit('setEnemyVisibility',{alpha:1.0});
 }
-// Create an enemy at the given x,y position.
-// TODO implement size to use different sprite classes.
+// Toggle delete mode.
 function deleteEnemy(){
   if(!manager.deleteMode){
     manager.deleteMode=true;
@@ -270,6 +272,8 @@ function deleteEnemy(){
     manager.deleteMode=false;
   }
 }
+// Create an enemy at the given x,y position.
+// TODO implement size to use different sprite classes.
 function createEnemy(x,y,size){
   var id = manager.enemies.getChildren().length;
   var enemy_container = createEnemyHelper(x,y,size,id);
@@ -288,8 +292,13 @@ function createEnemyHelper(x,y,size,id){
   enemy_container.id = id;
   return enemy_container;
 }
+function setMap(form){
+  var map = form[0].value;
+  console.log(map);
+}
 // End DM Tools.
 
+//相手の関数.
 function distance(x1,x2,y1,y2){
   return Math.sqrt(Math.pow(x2-x1,2)+Math.pow(y2-y1,2));
 }

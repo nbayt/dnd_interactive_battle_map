@@ -4,6 +4,7 @@ var server = require('http').Server(app);
 var io = require('socket.io').listen(server)
 var players = {}
 var dmChars = {}
+const port = 25565;
 
 app.use(express.static(__dirname + '/public'));
 
@@ -18,7 +19,8 @@ app.get('/dm', function (req, res) {
 io.on('connection', function (socket) {
   console.log('A user connected.');
 
-  // create a new player and add it to our players object
+  // Create a new player and add it to our players object.
+  // TODO move to client side.
   players[socket.id] = {
     rotation: 0,
     x: Math.floor(Math.random() * 700) + 50,
@@ -27,26 +29,23 @@ io.on('connection', function (socket) {
     name: 'Unnamed Hollow',
     color: 'green'
   };
-  // send the players object to the new player
+  // Send the players object to the new player.
   socket.emit('currentPlayers', players);
   socket.emit('currentDMChars', dmChars);
-  // update all other players of the new player
+  // Update all other players of the new player.
   socket.broadcast.emit('newPlayer', players[socket.id]);
+  // End new player creation.
 
   socket.on('disconnect', function () {
     console.log('User Disconnected.');
-    // remove this player from our players object
     delete players[socket.id];
-    // emit a message to all players to remove this player
     io.emit('disconnect', socket.id);
   });
 
-  // when a player moves, update the player data.
+  // When a player moves, update the player data.
   socket.on('playerMovement', function (movementData) {
     players[socket.id].x = movementData.x;
     players[socket.id].y = movementData.y;
-    players[socket.id].rotation = movementData.rotation;
-    // emit a message to all players about the player that moved
     socket.broadcast.emit('playerMoved', players[socket.id]);
   });
 
@@ -82,13 +81,14 @@ io.on('connection', function (socket) {
   socket.on('enemyDelete', function(enemyData){
     toDelete = dmChars[enemyData.enemyId];
     delete dmChars[enemyData.enemyId];
-    socket.broadcast.emit('enemyDeleted', toDelete);
+    socket.broadcast.emit('enemyDeleted', {id: enemyData.enemyId});
+    console.log(`Enemy ${enemyData.enemyId} deleted.`);
   });
   socket.on('setEnemyVisibility', function(data){
     socket.broadcast.emit('setEnemyVisibility', data);
   });
 });
 
-server.listen(25565, function () {
+server.listen(port, function () {
   console.log(`Listening on ${server.address().port}`);
 });

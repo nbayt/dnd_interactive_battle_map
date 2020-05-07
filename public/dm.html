@@ -34,8 +34,7 @@
     </head>
 
     <body>
-        <h1>temp</h1>
-        <p>これはテストテクストブロックです。</p>
+        <h1>D&D Battle Board - DM Page</h1>
         <noscript>Please enable JavaScript to run this app.</noscript>
         <div id="wrapper">
           <div id="game"></div>
@@ -47,7 +46,7 @@
               <input type="submit" value="Update">
             </form>
             <form action="javascript:;" onsubmit="updateColor(this)">
-              <label for="update_color">Update color(TD):</label>
+              <label for="update_color">Update color:</label>
               <select id="update_color">
                 <option value="blue">Blue</option>
                 <option value="green">Green</option>
@@ -59,10 +58,17 @@
               <input type="submit" value="Update">
             </form>
             <h2>DM Controls</h2>
+            <form action="javascript:;" onsubmit="setMap(this)">
+              <label for="set_map">Set Map:</label>
+              <select id="set_map">
+                <option value="00">00</option>
+              </select>
+              <input type="submit" value="Update">
+            </form>
             <button type="button" name="hide_all_enemies" onclick="hideEnemies()">Hide Enemies</button>
-            <button type="button" name="show_enemies" onclick="showEnemies()">Show Enemies</button><br>
+            <button type="button" name="show_all_enemies" onclick="showEnemies()">Show Enemies</button><br>
             <button type="button" name="create_enemy" onclick="createEnemy(80,80,'medium')">Create Enemy</button>
-            <button type="button" name="delete_enemy" onclick="deleteEnemy()">Delete Enemy</button>
+            <button type="button" name="delete_enemy" onclick="deleteEnemy()">Delete Enemy</button><br>
           </div>
         </div>
         <script src="/socket.io/socket.io.js"></script>
