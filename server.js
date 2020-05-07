@@ -26,7 +26,6 @@ io.on('connection', function (socket) {
     playerId: socket.id,
     name: 'Unnamed Hollow',
     color: 'green'
-    //team: (Math.floor(Math.random() * 2) == 0) ? 'red' : 'blue'
   };
   // send the players object to the new player
   socket.emit('currentPlayers', players);
@@ -78,11 +77,13 @@ io.on('connection', function (socket) {
   socket.on('enemyUpdate', function(enemyData){
     dmChars[enemyData.id].x = enemyData.x;
     dmChars[enemyData.id].y = enemyData.y;
-    dmChars[enemyData.id].alpha = enemyData.alpha;
     socket.broadcast.emit('enemyUpdated', dmChars[enemyData.id]);
+  });
+  socket.on('setEnemyVisibility', function(data){
+    socket.broadcast.emit('setEnemyVisibility', data);
   });
 });
 
-server.listen(8081, function () {
+server.listen(25565, function () {
   console.log(`Listening on ${server.address().port}`);
 });

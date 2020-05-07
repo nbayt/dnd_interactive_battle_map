@@ -19,6 +19,6 @@ Run `npm install` to init modules and run with `node server.js`.
    - [x] Create DM admin page.
    - [ ] Easy map import for on the fly changes.
    - [ ] Add enemies.
-   - [ ] Hide and show enemies.
+   - [x] Hide and show enemies.
    - [ ] Draw circles and boxes for skill zones.
    - [ ] Buff/debuff icons.

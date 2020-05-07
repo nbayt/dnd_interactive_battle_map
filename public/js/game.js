@@ -102,8 +102,14 @@ function create() {
         if(enemy.id === enemyInfo.id){
           console.log(enemy.id);
           enemy.setPosition(enemyInfo.x, enemyInfo.y);
-          enemy.alpha = enemyInfo.alpha;
         }
+      });
+    }
+  });
+  this.socket.on('setEnemyVisibility', function(data){
+    if(!DM) {
+      self.enemies.getChildren().forEach(function(enemy){
+        enemy.alpha=data.alpha;
       });
     }
   });
@@ -118,7 +124,10 @@ function create() {
   });
 
   // Client input callbacks.
-  this.cursors = this.input.keyboard.createCursorKeys();
+
+  //this.input.keyboard.on('keydown-A', function(){}, this);
+
+  this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
   this.input.on('pointerdown', function(pointer){
     if(this.tile && distance(this.tile.x,pointer.x,this.tile.y,pointer.y)<40){
       this.tile.followMouse = true;
@@ -154,7 +163,6 @@ function create() {
     }
   }, this);
 }
-
 function update() {
   if (this.tile) {
     var x = this.tile.x;
@@ -176,16 +184,14 @@ function update() {
     manager.enemies.getChildren().forEach(function(enemy){
       var x = enemy.x;
       var y = enemy.y;
-      var a = enemy.alpha;
       // If moved then update server.
-      if (enemy.oldPosition && (x !== enemy.oldPosition.x || y !== enemy.oldPosition.y || a !== enemy.oldPosition.alpha)) {
-        manager.socket.emit('enemyUpdate', {x: x, y: y, alpha: a, id: enemy.id});
+      if (enemy.oldPosition && (x !== enemy.oldPosition.x || y !== enemy.oldPosition.y)) {
+        manager.socket.emit('enemyUpdate', {x: x, y: y, id: enemy.id});
       }
       // Save old pos data.
       enemy.oldPosition = {
         x: x,
-        y: y,
-        alpha: a
+        y: y
       };
     });
   }
@@ -232,13 +238,16 @@ function updateColor(form){
 // End Client Tools.
 
 // DM TOOLS.
+// Hide all enemies from players.
 function hideEnemies(){
-  //self.tile.alpha = 0; - TODO use for DM enemies
-  console.log('TODO');
+  manager.socket.emit('setEnemyVisibility',{alpha:0.0});
 }
+// Show all enemies.
 function showEnemies(){
-  console.log('TODO');
+  manager.socket.emit('setEnemyVisibility',{alpha:1.0});
 }
+// Create an enemy at the given x,y position.
+// TODO implement size to use different sprite classes. 
 function createEnemy(x,y,size){
   var id = manager.enemies.getChildren().length;
   var enemy_container = createEnemyHelper(x,y,size,id);
