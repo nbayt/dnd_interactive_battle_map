@@ -89,10 +89,8 @@ function create() {
   });
   this.socket.on('currentDMChars',function(enemiesInfo){
     if(enemiesInfo){
-      console.log(JSON.stringify(enemiesInfo));
       Object.keys(enemiesInfo).forEach(function(id){
         var enemyInfo = enemiesInfo[id];
-        console.log(JSON.stringify(enemyInfo));
         var enemy_container = createEnemyHelper(enemyInfo.x, enemyInfo.y, enemyInfo.size, enemyInfo.id);
         manager.enemies.add(enemy_container);
       });
@@ -181,7 +179,6 @@ function update() {
       var a = enemy.alpha;
       // If moved then update server.
       if (enemy.oldPosition && (x !== enemy.oldPosition.x || y !== enemy.oldPosition.y || a !== enemy.oldPosition.alpha)) {
-        console.log(JSON.stringify({x: x, y: y, alpha: a, id: enemy.id}));
         manager.socket.emit('enemyUpdate', {x: x, y: y, alpha: a, id: enemy.id});
       }
       // Save old pos data.
