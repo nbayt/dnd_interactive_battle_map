@@ -20,5 +20,6 @@ Run `npm install` to init modules and run with `node server.js`.
    - [ ] Easy map import for on the fly changes.
    - [ ] Add enemies.
    - [x] Hide and show enemies.
+   - [x] Delete Enemies.
    - [ ] Draw circles and boxes for skill zones.
    - [ ] Buff/debuff icons.
