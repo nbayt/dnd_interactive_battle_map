@@ -60,8 +60,9 @@
             </form>
             <h2>DM Controls</h2>
             <button type="button" name="hide_all_enemies" onclick="hideEnemies()">Hide Enemies</button>
-            <button type="button" name="hide_all_enemies" onclick="showEnemies()">Show Enemies</button><br>
-            <button type="button" name="hide_all_enemies" onclick="createEnemy(80,80,'medium')">Create Enemy</button>
+            <button type="button" name="show_enemies" onclick="showEnemies()">Show Enemies</button><br>
+            <button type="button" name="create_enemy" onclick="createEnemy(80,80,'medium')">Create Enemy</button>
+            <button type="button" name="delete_enemy" onclick="deleteEnemy()">Delete Enemy</button>
           </div>
         </div>
         <script src="/socket.io/socket.io.js"></script>

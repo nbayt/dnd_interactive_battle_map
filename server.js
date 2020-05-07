@@ -81,8 +81,13 @@ io.on('connection', function (socket) {
     dmChars[enemyData.id].alpha = enemyData.alpha;
     socket.broadcast.emit('enemyUpdated', dmChars[enemyData.id]);
   });
+  socket.on('enemyDelete', function(enemyData){
+    toDelete = dmChars[enemyData.enemyId];
+    delete dmChars[enemyData.enemyId];
+    socket.broadcast.emit('enemyDeleted', toDelete);
+  });
 });
 
-server.listen(8081, function () {
+server.listen(25565, function () {
   console.log(`Listening on ${server.address().port}`);
 });
