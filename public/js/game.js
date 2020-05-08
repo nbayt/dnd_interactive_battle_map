@@ -21,6 +21,7 @@ var manager; // To add global ref. !VERY SAFE! :ok_handSign:
 var nextEnemyID = 0;
 var keyStatesDM = {};
 
+
 // TODO auto populate html with this list.
 const colors = {
   'green': 0x00FF00,
@@ -46,6 +47,8 @@ function preload() {
   this.load.image('enemy_huge', 'assets/enemy_huge.png');
 
   this.load.image('green_box', 'assets/green_box.png');
+
+  //console.log(rollDice('\1+7o:ok_hand:-3'));
 
   // Setup map list TODO
   if(DM){
