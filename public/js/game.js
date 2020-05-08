@@ -1,8 +1,8 @@
 var config = {
   type: Phaser.AUTO,
   parent: 'game',
-  width: 1500,
-  height: 2200,
+  width: 1800,
+  height: 2500,
   physics: {
     default: 'arcade',
     arcade: {
@@ -38,7 +38,7 @@ const colors = {
 
 function preload() {
   this.load.image('char_base', 'assets/pawn.png')
-  this.load.image('bg', 'assets/bg_01.png');
+  this.load.image('bg', 'assets/bg_02.png');
 
   this.load.image('enemy_small', 'assets/enemy_small.png');
   this.load.image('enemy_medium', 'assets/enemy_medium.png');
@@ -61,7 +61,7 @@ function create() {
   console.log(DM);
   var self = this;
   manager = this;
-  this.add.image(-200, -200, 'bg').setOrigin(0).setScale(0.8);
+  this.add.image(0, -100, 'bg').setOrigin(0).setScale(0.45);
   this.socket = io();
 
   // For client storage.
