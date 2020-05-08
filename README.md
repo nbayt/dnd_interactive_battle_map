@@ -9,6 +9,7 @@ Run `npm install` to init modules and run with `node server.js`.
  - [x] User tools and interface.
  - [x] DM page for admin usage.
  - [ ] CSS.
+ - [ ] Add George the snake
 
 ### TODO - Smaller Steps
  - User Tools

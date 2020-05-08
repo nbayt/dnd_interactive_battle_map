@@ -19,6 +19,7 @@ var config = {
 var game = new Phaser.Game(config);
 var manager; // To add global ref. !VERY SAFE! :ok_handSign:
 var nextEnemyID = 0;
+var keyStatesDM = {};
 
 // TODO auto populate html with this list.
 const colors = {
@@ -42,6 +43,9 @@ function preload() {
   this.load.image('enemy_small', 'assets/enemy_small.png');
   this.load.image('enemy_medium', 'assets/enemy_medium.png');
   this.load.image('enemy_large', 'assets/enemy_large.png');
+  this.load.image('enemy_huge', 'assets/enemy_huge.png');
+
+  this.load.image('green_box', 'assets/green_box.png');
 
   // Setup map list TODO
   if(DM){
@@ -153,6 +157,23 @@ function create() {
     });
   });
 
+  // DM Input Commands
+  if(DM && false){
+    this.input.keyboard.on('keydown-B', function(){
+      keyStatesDM.b = true;
+      if(keyStatesDM.mDown){
+        if(!keyStatesDM.box){
+          keyStatesDM.box = this.physics.add.image(0,0, 'green_box').setOrigin(0.5,0.5).setDisplaySize(40, 40);
+          //keyStatesDM.box.setDisplaySize()
+        }
+      }
+
+    }, this);
+    this.input.keyboard.on('keyup-B', function(){
+      keyStatesDM.b = false;
+    }, this);
+  }
+
   // Client input callbacks.
   //this.input.keyboard.on('keydown-A', function(){}, this);
   //this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -161,6 +182,9 @@ function create() {
       this.tile.followMouse = true;
     }
     else if(DM){
+      keyStatesDM.mDown = true;
+      keyStatesDM.mX = pointer.x;
+      keyStatesDM.mY = pointer.y;
       for(var i=0;i<manager.enemies.getChildren().length;i++){
         var enemy = manager.enemies.getChildren()[i];
         if(distance(enemy.x,pointer.x,enemy.y,pointer.y)<40){
@@ -177,6 +201,9 @@ function create() {
     }
   }, this);
   this.input.on('pointerup',function(pointer){
+    if(DM){
+      keyStatesDM.mDown = false;
+    }
     if(this.tile){
       this.tile.followMouse = false;
     }
@@ -301,6 +328,9 @@ function createEnemyHelper(x,y,size,id){
   }
   else if(size === 'large'){
     enemy = manager.physics.add.image(0,0, 'enemy_large').setOrigin(0.5,0.5).setDisplaySize(100, 100);
+  }
+  else if(size === 'huge'){
+    enemy = manager.physics.add.image(0,0, 'enemy_huge').setOrigin(0.5,0.5).setDisplaySize(150, 150);
   }
 
   //enemy.setTint(colors['red']);
