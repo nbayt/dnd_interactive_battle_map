@@ -3,6 +3,8 @@ var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io').listen(server)
 
+const chars = ['Arvid Shieldheart','Trob','Yart','Old Man Waterfall','Captain Jack','Remilia Merathor','Jamben Swordhand'];
+var charsData = {};
 const port = 25565;
 var AUTH;
 
@@ -97,14 +99,37 @@ function getNewToken(oAuth2Client, callback) {
      console.log('ERROR');
    });
  }
+ function readCharAC(auth, char){
+   var promise = new Promise(async function(resolve, reject){
+     const sheets = google.sheets({version: 'v4', auth});
+     const response = (await sheets.spreadsheets.values.get({
+       spreadsheetId: '1f_oKylI9noTnQhxGy-B6kCDf8fN0bBkasMsPShLhNiY',
+       range: `${char}!E17`
+     })).data;
+     resolve(response);
+   });
+   return promise;
+ }
 /*
   End of code grabbed from https://developers.google.com/sheets/api/quickstart/nodejs
 */
 
-function saveAuth(auth){
+async function saveAuth(auth){
   AUTH = auth;
+  // Grab inital character sheet stat data here.
+  for(var i =0;i<chars.length;i++){
+    var char = chars[i];
+    charsData[char] = (await readCharAC(auth, char)).values[0][0];
+  }
+  /*
+  (await chars.forEach(async function(char){
+    charsData[char] = (await readCharAC(auth, char)).values[0][0];
+  }));
+  */
+  //var result = await readCharAC(auth, 'Remilia Merathor');
+  console.log(JSON.stringify(charsData));
+  console.log('Data was read!');
 }
-
 // ----- BEGIN EXPRESS ROUTING ----- //
 app.use(express.static(__dirname + '/public'));
 
@@ -128,7 +153,8 @@ io.on('connection', function (socket) {
     y: Math.floor(Math.random() * 100) + 500,
     playerId: socket.id,
     name: 'Unnamed Hollow',
-    color: 'green'
+    color: 'green',
+    states: {knockedDown: false, incaped: false}
   };
   // Send the players object to the new player.
   socket.emit('currentPlayers', players);
@@ -165,13 +191,7 @@ io.on('connection', function (socket) {
 
   // DM updates
   socket.on('enemyCreate', function(enemyData){
-    dmEnemies[enemyData.id]={
-      x: enemyData.x,
-      y: enemyData.y,
-      alpha: enemyData.alpha,
-      size: enemyData.size,
-      id: enemyData.id
-    };
+    dmEnemies[enemyData.id]=enemyData;
     socket.broadcast.emit('enemyCreated', enemyData);
   });
   socket.on('enemyUpdate', function(enemyData){
@@ -188,11 +208,31 @@ io.on('connection', function (socket) {
   socket.on('setEnemyVisibility', function(data){
     socket.broadcast.emit('setEnemyVisibility', data);
   });
+  socket.on('enemyChangeState', function(data){
+    dmEnemies[data.enemyId].states = data.states;
+    console.log(JSON.stringify(data));
+    socket.broadcast.emit('enemyStateChanged', data);
+  });
+  socket.on('playerChangeState', function(data){
+    players[data.playerId].states = data.states;
+    console.log(JSON.stringify(data));
+    socket.broadcast.emit('playerStateChanged', data);
+  });
   // End DM Updates
 
   // Basic relay socket to handle client to client messaging
   socket.on('relayMessage', function(relayData){
     socket.broadcast.emit(relayData.message, relayData.data);
+  });
+  socket.on('getCharAC', async function(data){
+    for(var i =0;i<chars.length;i++){
+      var char = chars[i];
+      charsData[char] = (await readCharAC(AUTH, char)).values[0][0];
+    }
+    console.log(JSON.stringify(charsData));
+    console.log('AC Data was read!');
+
+    socket.emit('getCharAC', charsData);
   });
 });
 

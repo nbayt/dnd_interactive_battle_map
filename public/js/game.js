@@ -46,6 +46,9 @@ function preload() {
   this.load.image('enemy_large', 'assets/enemy_large.png');
   this.load.image('enemy_huge', 'assets/enemy_huge.png');
 
+  this.load.image('state_knocked_down', 'assets/state_knocked_down.png');
+  this.load.image('state_incap', 'assets/state_incap.png');
+
   this.load.image('green_box', 'assets/green_box.png');
 
   //console.log(rollDice('\1+7o:ok_hand:-3'));
@@ -61,7 +64,7 @@ function preload() {
 }
 
 function create() {
-  console.log(DM);
+  console.log(`Is DM = ${DM}`);
   var self = this;
   manager = this;
   this.add.image(0, -100, 'bg').setOrigin(0).setScale(0.45);
@@ -78,12 +81,17 @@ function create() {
         addPlayer(self, players[id]);
       }
       else{
-        addOtherPlayers(self,players[id])
+        console.log('Current Players');
+        console.log(players[id]);
+        var otherPlayer = addOtherPlayers(self,players[id]);
+        self.otherPlayers.add(otherPlayer);
+        changePlayerStates(otherPlayer, players[id].states);
       }
     })
   });
   this.socket.on('newPlayer', function (playerInfo) {
-    addOtherPlayers(self, playerInfo);
+    var otherPlayer = addOtherPlayers(self,playerInfo);
+    self.otherPlayers.add(otherPlayer);
   });
 
   // Update callbacks.
@@ -109,11 +117,22 @@ function create() {
       }
     });
   });
+  this.socket.on('playerStateChanged', function(data){
+    if(self.tile.playerId === data.playerId){
+      changePlayerStates(self.tile, data.states);
+    }
+    else{
+      self.otherPlayers.getChildren().forEach(function(player){
+        if(player.playerId === data.playerId){
+          changePlayerStates(player, data.states);
+        }
+      });
+    }
+  });
   this.socket.on('enemyCreated',function(enemyInfo){
     if(!DM){
       var enemy_container = createEnemyHelper(enemyInfo.x, enemyInfo.y, enemyInfo.size, enemyInfo.id);
       manager.enemies.add(enemy_container);
-      console.log('Creating new enemy from server.');
     }
   });
   this.socket.on('currentDMEnemies',function(enemiesInfo){
@@ -122,6 +141,7 @@ function create() {
         var enemyInfo = enemiesInfo[id];
         var enemy_container = createEnemyHelper(enemyInfo.x, enemyInfo.y, enemyInfo.size, enemyInfo.id);
         manager.enemies.add(enemy_container);
+        changeEnemyStates(enemy_container, enemyInfo.states);
       });
     }
   });
@@ -129,7 +149,6 @@ function create() {
     if(!DM){
       self.enemies.getChildren().forEach(function(enemy){
         if(enemy.id === enemyInfo.id){
-          //console.log(enemy.id);
           enemy.setPosition(enemyInfo.x, enemyInfo.y);
         }
       });
@@ -139,7 +158,6 @@ function create() {
     self.enemies.getChildren().forEach(function(enemy){
       if(enemy.id === enemyData.id){
         enemy.destroy();
-        console.log(`Deleted enemy: ${enemyData.id}.`);
       }
     });
   });
@@ -150,7 +168,24 @@ function create() {
       });
     }
   });
+  this.socket.on('enemyStateChanged', function(data){
+    self.enemies.getChildren().forEach(function(enemy){
+      if(enemy.id === data.enemyId){
+        changeEnemyStates(enemy, data.states);
+      }
+    });
+  });
   // End update callbacks.
+
+  this.socket.on('getCharAC', function(data){
+    console.log('Got chars AC');
+    console.log(data);
+    var innerhtml = ''
+    Object.keys(data).forEach(function(char){
+      innerhtml+=`<li>${char}: ${data[char]}</li>`
+    });
+    document.getElementById("char_ac_list").innerHTML = innerhtml;
+  });
 
   this.socket.on('disconnect', function (playerId) {
     self.otherPlayers.getChildren().forEach(function(otherPlayer) {
@@ -161,6 +196,7 @@ function create() {
   });
 
   // DM Input Commands
+  // ----- WIP ----- //
   if(DM && false){
     this.input.keyboard.on('keydown-B', function(){
       keyStatesDM.b = true;
@@ -176,6 +212,7 @@ function create() {
       keyStatesDM.b = false;
     }, this);
   }
+  // ----- END WIP ----- //
 
   // Client input callbacks.
   //this.input.keyboard.on('keydown-A', function(){}, this);
@@ -188,17 +225,55 @@ function create() {
       keyStatesDM.mDown = true;
       keyStatesDM.mX = pointer.x;
       keyStatesDM.mY = pointer.y;
+      // Code to handle DM modification of enemy state and other variables.
       for(var i=0;i<manager.enemies.getChildren().length;i++){
         var enemy = manager.enemies.getChildren()[i];
-        if(distance(enemy.x,pointer.x,enemy.y,pointer.y)<40){
+        if(distance(enemy.x,pointer.x,enemy.y,pointer.y)<enemy.sizeVal){
           if(manager.deleteMode){
             manager.deleteMode=false;
             var id = enemy.id;
             enemy.destroy();
             manager.socket.emit('enemyDelete',{enemyId: id});
           }
+          else if(manager.knockDownMode){ // Check if knockdown toggle is active.
+            manager.knockDownMode = false;
+            changeEnemyStates(enemy, {knockedDown: true, incaped: enemy.states.incaped});
+            manager.socket.emit('enemyChangeState', {enemyId: enemy.id, states: enemy.states});
+          }
+          else if(manager.incapMode){ // Check if knockdown toggle is active.
+            manager.incapMode = false;
+            changeEnemyStates(enemy, {knockedDown: enemy.states.knockedDown, incaped: true});
+            manager.socket.emit('enemyChangeState', {enemyId: enemy.id, states: enemy.states});
+          }
+          else if(manager.clearStatesMode){ // Check if clear states toggle is active.
+            manager.clearStatesMode = false;
+            changeEnemyStates(enemy, {knockedDown: false, incaped:false});
+            manager.socket.emit('enemyChangeState', {enemyId: enemy.id, states: enemy.states});
+          }
           enemy.followMouse = true;
           break;
+        }
+      }
+      // Code to handle DM modification of player state and other variables.
+      for(var i=0; i<manager.otherPlayers.getChildren().length;i++){
+        var player = manager.otherPlayers.getChildren()[i];
+        if(distance(player.x,pointer.x,player.y,pointer.y)<40){
+          if(manager.knockDownMode){ // Check if knockdown toggle is active.
+            manager.knockDownMode = false;
+            changePlayerStates(player,{knockedDown: true, incaped: player.states.incaped});
+            manager.socket.emit('playerChangeState', {playerId: player.playerId, states: player.states});
+          }
+          if(manager.incapMode){ // Check if incap toggle is active.
+            manager.incapMode = false;
+            changePlayerStates(player,{knockedDown: player.states.incaped, incaped: true});
+            manager.socket.emit('playerChangeState', {playerId: player.playerId, states: player.states});
+          }
+          else if(manager.clearStatesMode){ // Check if clear states toggle is active.
+            manager.clearStatesMode = false;
+            changePlayerStates(player,{knockedDown: false, incaped: false});
+            manager.socket.emit('playerChangeState', {playerId: player.playerId, states: player.states});
+          }
+          // break; <--- これは必要ですか？
         }
       }
     }
@@ -258,17 +333,23 @@ function update() {
 function addPlayer(self, playerInfo){
   var tile = self.physics.add.image(0,0, 'char_base').setOrigin(0.5,0.5).setDisplaySize(40, 40);
   tile.setTint(colors[playerInfo.color]);
+  var states = createStates(40);
   var text = createPlayerTextLabel(self, playerInfo.name);
-  self.tile = self.add.container(playerInfo.x, playerInfo.y,[tile,text]);
+  var container = self.add.container(playerInfo.x, playerInfo.y,[tile,text,states]);
+  container.states = {knockedDown: false, incaped: false};
+  container.playerId = playerInfo.playerId;
+  self.tile = container;
 }
 
 function addOtherPlayers(self, playerInfo){
   const otherPlayer = self.add.sprite(0,0, 'char_base').setOrigin(0.5,0.5).setDisplaySize(40, 40);
   otherPlayer.setTint(colors[playerInfo.color]);
+  var states = createStates(40);
   var text = createPlayerTextLabel(self, playerInfo.name);
-  const otherTile = self.add.container(playerInfo.x, playerInfo.y,[otherPlayer,text]);
+  const otherTile = self.add.container(playerInfo.x, playerInfo.y,[otherPlayer,text,states]);
   otherTile.playerId = playerInfo.playerId;
-  self.otherPlayers.add(otherTile);
+  otherTile.states = {knockedDown: false, incaped: false};
+  return otherTile;
 }
 
 function createPlayerTextLabel(self, label){
@@ -303,52 +384,144 @@ function hideEnemies(){
 function showEnemies(){
   manager.socket.emit('setEnemyVisibility',{alpha:1.0});
 }
+// Knock down enemy
+function knockDown(){
+  if(!manager.knockDownMode){
+    manager.knockDownMode = true;
+  }
+  else{
+    manager.knockDownMode = false;
+  }
+}
+function incap(){
+  if(!manager.incapMode){
+    manager.incapMode = true;
+  }
+  else{
+    manager.incapMode = false;
+  }
+}
+// Clear States.
+function clearStates(){
+  if(!manager.clearStatesMode){
+    manager.clearStatesMode = true;
+  }
+}
+// UNUSED
+function knockDownEnemy(enemy){
+  enemy.states.knockedDown = true
+  enemy.getAt(2).getAt(0).alpha=1;
+}
+// Change states of enemy.
+function changeEnemyStates(enemy, states){
+  enemy.states = states
+  if(states.knockedDown){
+    enemy.getAt(2).getAt(0).alpha=1;
+  }
+  else{
+    enemy.getAt(2).getAt(0).alpha=0;
+  }
+  if(states.incaped){
+    enemy.getAt(2).getAt(1).alpha=1;
+  }
+  else{
+    enemy.getAt(2).getAt(1).alpha=0;
+  }
+}
+// Change states of player.
+function changePlayerStates(player, states){
+  player.states = states
+  if(states.knockedDown){
+    player.getAt(2).getAt(0).alpha=1;
+  }
+  else{
+    player.getAt(2).getAt(0).alpha=0;
+  }
+  if(states.incaped){
+    player.getAt(2).getAt(1).alpha=1;
+  }
+  else{
+    player.getAt(2).getAt(1).alpha=0;
+  }
+}
 // Toggle delete mode.
 function deleteEnemy(){
   if(!manager.deleteMode){
-    manager.deleteMode=true;
+    manager.deleteMode = true;
   }
   else{
     manager.deleteMode=false;
   }
 }
 // Create an enemy at the given x,y position.
-// TODO implement size to use different sprite classes.
 function createEnemy(x,y,size){
   var id = nextEnemyID;
   nextEnemyID++;
   var enemy_container = createEnemyHelper(x,y,size,id);
   manager.enemies.add(enemy_container);
-  manager.socket.emit('enemyCreate',{x: enemy_container.x, y: enemy_container.y, alpha: enemy_container.alpha, size: size, id: id});
+  manager.socket.emit('enemyCreate',
+  { x: enemy_container.x,
+    y: enemy_container.y,
+    alpha: enemy_container.alpha,
+    size: size,
+    id: id,
+    states: enemy_container.states
+  });
 }
 function createEnemyHelper(x,y,size,id){
   var enemy;
+  var sizeVal = 40;
   if(size === 'small'){
     enemy = manager.physics.add.image(0,0, 'enemy_small').setOrigin(0.5,0.5).setDisplaySize(40, 40);
   }
   else if (size === 'medium'){
     enemy = manager.physics.add.image(0,0, 'enemy_medium').setOrigin(0.5,0.5).setDisplaySize(50, 50);
+    sizeVal = 50;
   }
   else if(size === 'large'){
     enemy = manager.physics.add.image(0,0, 'enemy_large').setOrigin(0.5,0.5).setDisplaySize(100, 100);
+    sizeVal = 100;
   }
   else if(size === 'huge'){
     enemy = manager.physics.add.image(0,0, 'enemy_huge').setOrigin(0.5,0.5).setDisplaySize(150, 150);
+    sizeVal = 150;
   }
 
   //enemy.setTint(colors['red']);
+  // Order here is IMPORTANT until late code is added for layers.
+  var states = createStates(sizeVal);
+
   var text = manager.add.text(0,0,id);
   text.style.setFont("Arial");
   text.style.setFontSize('20px');
   text.style.setColor('black');
   text.setOrigin(0.5, 0.5);
-  var enemy_container = manager.add.container(x, y,[enemy,text]);
+
+  var enemy_container = manager.add.container(x, y,[enemy, text, states]);
   enemy_container.id = id;
+  enemy_container.states = {knockedDown: false, incaped: false};
+  enemy_container.sizeVal = sizeVal;
   return enemy_container;
 }
+
+function createStates(size){
+  var down = manager.add.sprite(0,0, 'state_knocked_down').setOrigin(0.5,0.5).setDisplaySize(size,size);
+  down.alpha = 0.0;
+  var incap = manager.add.sprite(0,0, 'state_incap').setOrigin(0.5,0.5).setDisplaySize(size,size);
+  incap.alpha = 0.0;
+  var states = manager.add.container(0,0,[down, incap]);
+  return(states);
+}
+
+// TODO
+// Many issues currently due to fact map is not a constant size and custom offsets are often needed.
 function setMap(form){
   var map = form[0].value;
   console.log(map);
+}
+// Grab latest data from spreadsheet.
+function getCharAC(){
+  manager.socket.emit('getCharAC',{});
 }
 // End DM Tools.
 
