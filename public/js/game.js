@@ -51,8 +51,6 @@ function preload() {
 
   this.load.image('green_box', 'assets/green_box.png');
 
-  //console.log(rollDice('\1+7o:ok_hand:-3'));
-
   // Setup map list TODO
   if(DM){
     var str = '';
@@ -174,6 +172,11 @@ function create() {
         changeEnemyStates(enemy, data.states);
       }
     });
+  });
+
+  // Handle dice rolls
+  this.socket.on('diceRoll', function(data){
+    updateDiceOutcomes(data.roll, data.name);
   });
   // End update callbacks.
 
@@ -524,6 +527,21 @@ function getCharAC(){
   manager.socket.emit('getCharAC',{});
 }
 // End DM Tools.
+
+// ----- MISC FUNCTIONS ----- //
+function rollDice(diceForm){
+  var diceString = diceForm[0].value;
+  var roll = DICE_rollDice(diceString);
+  updateDiceOutcomes(roll, 'You');
+  manager.socket.emit('relayMessage',{message:'diceRoll', data: {name: manager.tile.getAt(1).text, roll: roll}});
+}
+function updateDiceOutcomes(roll, roller_name){
+  var innerhtml = document.getElementById("dice_outcomes").innerHTML;
+  var str = `<li><b>${roller_name}</b> rolled ${roll.outcome}! | Rolls: ${JSON.stringify(roll.rollsOutcomes)}+${roll.fixedAdd}</li>${innerhtml}`;
+  document.getElementById("dice_outcomes").innerHTML = str;
+}
+
+// ----- END MISC FUNCTIONS ----- //
 
 //相手の関数.
 function distance(x1,x2,y1,y2){

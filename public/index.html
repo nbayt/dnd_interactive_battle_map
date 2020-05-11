@@ -62,7 +62,13 @@
                 <option value="pale_green">Pale Green</option>
               </select>
               <input type="submit" value="Update">
+            </form><br>
+            <form action="javascript:;" onsubmit="rollDice(this)">
+              <label for="dice_string">Dice Input:</label>
+              <input type="text" id="dice_string">
+              <input type="submit" value="Roll!">
             </form>
+            <ul id="dice_outcomes"></ul>
           </div>
         </div>
         <script src="/socket.io/socket.io.js"></script>

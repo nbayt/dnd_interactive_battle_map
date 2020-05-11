@@ -1,11 +1,16 @@
 // Pass in a string of type [NUM]d[NUM]+[NUM]+...
 // EG: 4d8+1+2d6 and get a roll for that dice equation.
 // Returns 0 if you give it something bad, give it something it can parse and you get a number.
-function rollDice(diceString){
+function DICE_rollDice(diceString){
+  const defaultResponse = {outcome: -1, rolls: [], rollsOutcomes: [], fixedAdd: -1};
+  if(diceString.length>200){ // NO //
+    return(defaultResponse);
+  }
   try{
-    diceString = diceString.toLowerCase();
-    diceString = diceString.replace(/[^\+0-9d]/g,''); // ようくない文字を外す
+    diceString = cleanDiceString(diceString);
+    var outcome = 0;
     var diceRolls = [];
+    var diceRollsOutcomes = [];
     var fixedAdd = 0;
     var diceParts = diceString.split('+');
     diceParts.forEach(function(dice){
@@ -20,16 +25,20 @@ function rollDice(diceString){
       }
     });
     diceRolls.forEach(function(die){
-      fixedAdd += Math.floor(Math.random() * die)+1;
+      var roll = Math.floor(Math.random() * die)+1;
+      outcome += roll;
+      diceRollsOutcomes.push(roll);
     })
-    if(!fixedAdd || fixedAdd === NaN){ // お前たちがうるさいですよ！
-      return(0);
-    }
-    else{
-      return(fixedAdd);
-    }
+    outcome += fixedAdd
+    return({outcome: outcome, rolls: diceRolls, rollsOutcomes: diceRollsOutcomes, fixedAdd: fixedAdd});
   }
   catch(e){ // Just in case
-    return(0);
+    return(defaultResponse);
   }
+}
+
+function cleanDiceString(diceString){
+  diceString = diceString.toLowerCase();
+  diceString = diceString.replace(/[^\+\-0-9d]/g,''); // ようくない文字を外す
+  return(diceString);
 }

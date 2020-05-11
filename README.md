@@ -16,7 +16,7 @@ Follow the instructions [here](https://developers.google.com/sheets/api/quicksta
  - User Tools
    - [x] Change name.
    - [x] Change color.
-   - [ ] Dice roller.
+   - [x] Dice roller.
    - [x] Basic stats pull from google sheets.
  - DM Tools
    - [x] Create DM admin page.
