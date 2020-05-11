@@ -46,6 +46,8 @@ function preload() {
   this.load.image('enemy_large', 'assets/enemy_large.png');
   this.load.image('enemy_huge', 'assets/enemy_huge.png');
 
+  this.load.image('george_snake', 'assets/G-Man.png');
+
   this.load.image('state_knocked_down', 'assets/state_knocked_down.png');
   this.load.image('state_incap', 'assets/state_incap.png');
 
@@ -489,6 +491,10 @@ function createEnemyHelper(x,y,size,id){
     enemy = manager.physics.add.image(0,0, 'enemy_huge').setOrigin(0.5,0.5).setDisplaySize(150, 150);
     sizeVal = 150;
   }
+  else if(size === 'snake'){
+    enemy = manager.physics.add.image(0,0, 'george_snake').setOrigin(0.5,0.5).setDisplaySize(100, 100);
+    sizeVal = 100;
+  }
 
   //enemy.setTint(colors['red']);
   // Order here is IMPORTANT until late code is added for layers.
@@ -499,6 +505,10 @@ function createEnemyHelper(x,y,size,id){
   text.style.setFontSize('20px');
   text.style.setColor('black');
   text.setOrigin(0.5, 0.5);
+  if(size == 'snake'){
+    text.text = 'George';
+    text.setPosition(0,-50);
+  }
 
   var enemy_container = manager.add.container(x, y,[enemy, text, states]);
   enemy_container.id = id;
