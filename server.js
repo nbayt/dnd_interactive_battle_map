@@ -3,7 +3,7 @@ var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io').listen(server)
 
-const chars = ['Arvid Shieldheart','Trob','Yart','Old Man Waterfall','Captain Jack','Remilia Merathor','Jamben Swordhand'];
+var chars = [];
 var charsData = {};
 const port = 25565;
 var AUTH;
@@ -84,52 +84,54 @@ function getNewToken(oAuth2Client, callback) {
   });
 }
 
- function readRemiliaAC(auth){
-   var promise = new Promise(async function(resolve, reject){
-     const sheets = google.sheets({version: 'v4', auth});
-     const response = (await sheets.spreadsheets.values.get({
-       spreadsheetId: '1f_oKylI9noTnQhxGy-B6kCDf8fN0bBkasMsPShLhNiY',
-       range: 'Remilia Merathor!E17',
-     })).data;
-     resolve(response);
-   });
-   promise.then(function(result){
-     console.log(result);
-   }, function(error){
-     console.log('ERROR');
-   });
- }
- function readCharAC(auth, char){
-   var promise = new Promise(async function(resolve, reject){
+/*
+  End of code grabbed from https://developers.google.com/sheets/api/quickstart/nodejs
+*/
+function readCharsFromSheet(auth){
+  var promise = new Promise(async function(resolve, reject){
+    try{
+      const sheets = google.sheets({version: 'v4', auth});
+      const response = (await sheets.spreadsheets.get({
+        spreadsheetId: '1f_oKylI9noTnQhxGy-B6kCDf8fN0bBkasMsPShLhNiY'
+      }));
+      resolve(response);
+    } catch(error){
+      resolve(null);
+    }
+  });
+  return(promise);
+}
+
+function readCharAC(auth, char){
+ var promise = new Promise(async function(resolve, reject){
+   try{
      const sheets = google.sheets({version: 'v4', auth});
      const response = (await sheets.spreadsheets.values.get({
        spreadsheetId: '1f_oKylI9noTnQhxGy-B6kCDf8fN0bBkasMsPShLhNiY',
        range: `${char}!E17`
      })).data;
      resolve(response);
-   });
-   return promise;
- }
-/*
-  End of code grabbed from https://developers.google.com/sheets/api/quickstart/nodejs
-*/
+   } catch(error){
+     console.log(error);
+     resolve(null);
+   }
+ });
+ return promise;
+}
 
 async function saveAuth(auth){
   AUTH = auth;
   // Grab inital character sheet stat data here.
-  for(var i =0;i<chars.length;i++){
-    var char = chars[i];
-    charsData[char] = (await readCharAC(auth, char)).values[0][0];
+  var response = (await readCharsFromSheet(AUTH));
+  if(response != null){
+    response.data.sheets.forEach((sheet) => {
+      chars.push(sheet.properties.title);
+    });
+    console.log(chars);
   }
-  /*
-  (await chars.forEach(async function(char){
-    charsData[char] = (await readCharAC(auth, char)).values[0][0];
-  }));
-  */
-  //var result = await readCharAC(auth, 'Remilia Merathor');
-  console.log(JSON.stringify(charsData));
-  console.log('Data was read!');
+  console.log('Read chars from spreadsheet!');
 }
+
 // ----- BEGIN EXPRESS ROUTING ----- //
 app.use(express.static(__dirname + '/public'));
 
@@ -227,7 +229,10 @@ io.on('connection', function (socket) {
   socket.on('getCharAC', async function(data){
     for(var i =0;i<chars.length;i++){
       var char = chars[i];
-      charsData[char] = (await readCharAC(AUTH, char)).values[0][0];
+      var response = (await readCharAC(AUTH, char));
+      if(response != null){
+        charsData[char] = response.values[0][0];
+      }
     }
     console.log(JSON.stringify(charsData));
     console.log('AC Data was read!');
@@ -235,7 +240,6 @@ io.on('connection', function (socket) {
     socket.emit('getCharAC', charsData);
   });
 });
-
 
 server.listen(port, function () {
   console.log(`Listening on ${server.address().port}`);

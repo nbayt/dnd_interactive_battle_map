@@ -38,6 +38,7 @@ const colors = {
 }
 
 function preload() {
+  // Preload images.
   this.load.image('char_base', 'assets/pawn.png')
   this.load.image('bg', 'assets/bg_02.png');
 
@@ -222,6 +223,7 @@ function create() {
   // Client input callbacks.
   //this.input.keyboard.on('keydown-A', function(){}, this);
   //this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
   this.input.on('pointerdown', function(pointer){
     if(this.tile && distance(this.tile.x,pointer.x,this.tile.y,pointer.y)<40){
       this.tile.followMouse = true;
@@ -550,7 +552,6 @@ function updateDiceOutcomes(roll, roller_name){
   var str = `<li><b>${roller_name}</b> rolled ${roll.outcome}! | Rolls: ${JSON.stringify(roll.rollsOutcomes)}+${roll.fixedAdd}</li>${innerhtml}`;
   document.getElementById("dice_outcomes").innerHTML = str;
 }
-
 // ----- END MISC FUNCTIONS ----- //
 
 //相手の関数.
