@@ -1,3 +1,5 @@
+const PLAYERSIZE = 40;
+
 var config = {
   type: Phaser.AUTO,
   parent: 'game',
@@ -16,13 +18,13 @@ var config = {
     update: update
   }
 };
+
 var game = new Phaser.Game(config);
 var manager; // To add global ref. !VERY SAFE! :ok_handSign:
 var nextEnemyID = 0;
 var keyStatesDM = {};
 
-
-// TODO auto populate html with this list.
+// ----- Color selection ----- //
 const colors = {
   'green': 0x00FF00,
   'blue': 0x0000FF,
@@ -34,8 +36,23 @@ const colors = {
   'forest_green': 0x228B22,
   'peru': 0xCD853F,
   'pale_green': 0x98FB98,
-  'red': 0xFF0000
+//  'red': 0xFF0000
 }
+
+// TODO cleanup naming.
+var html_str = '';
+Object.keys(colors).forEach(color_key=>{
+  var color_str = color_key.replace(/[\_]/g,' ');
+  var sub_strs = color_str.split(' ');
+  var final_str = '';
+  sub_strs.forEach((sub_str)=>{
+    final_str+=sub_str.charAt(0).toUpperCase()+sub_str.slice(1)+' ';
+  });
+  html_str+=`<option value= "${color_key}">${final_str}</option>`;
+  console.log(final_str);
+});
+document.getElementById('update_color').innerHTML = html_str;
+// ----- End color selection ----- //
 
 function preload() {
   // Preload images.
@@ -225,7 +242,7 @@ function create() {
   //this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
   this.input.on('pointerdown', function(pointer){
-    if(this.tile && distance(this.tile.x,pointer.x,this.tile.y,pointer.y)<40){
+    if(this.tile && distance(this.tile.x,pointer.x,this.tile.y,pointer.y)<PLAYERSIZE){
       this.tile.followMouse = true;
     }
     else if(DM){
@@ -264,7 +281,7 @@ function create() {
       // Code to handle DM modification of player state and other variables.
       for(var i=0; i<manager.otherPlayers.getChildren().length;i++){
         var player = manager.otherPlayers.getChildren()[i];
-        if(distance(player.x,pointer.x,player.y,pointer.y)<40){
+        if(distance(player.x,pointer.x,player.y,pointer.y)<PLAYERSIZE){
           if(manager.knockDownMode){ // Check if knockdown toggle is active.
             manager.knockDownMode = false;
             changePlayerStates(player,{knockedDown: true, incaped: player.states.incaped});
@@ -338,9 +355,9 @@ function update() {
 }
 
 function addPlayer(self, playerInfo){
-  var tile = self.physics.add.image(0,0, 'char_base').setOrigin(0.5,0.5).setDisplaySize(40, 40);
+  var tile = self.physics.add.image(0,0, 'char_base').setOrigin(0.5,0.5).setDisplaySize(PLAYERSIZE, PLAYERSIZE);
   tile.setTint(colors[playerInfo.color]);
-  var states = createStates(40);
+  var states = createStates(PLAYERSIZE);
   var text = createPlayerTextLabel(self, playerInfo.name);
   var container = self.add.container(playerInfo.x, playerInfo.y,[tile,text,states]);
   container.states = {knockedDown: false, incaped: false};
@@ -349,9 +366,9 @@ function addPlayer(self, playerInfo){
 }
 
 function addOtherPlayers(self, playerInfo){
-  const otherPlayer = self.add.sprite(0,0, 'char_base').setOrigin(0.5,0.5).setDisplaySize(40, 40);
+  const otherPlayer = self.add.sprite(0,0, 'char_base').setOrigin(0.5,0.5).setDisplaySize(PLAYERSIZE, PLAYERSIZE);
   otherPlayer.setTint(colors[playerInfo.color]);
-  var states = createStates(40);
+  var states = createStates(PLAYERSIZE);
   var text = createPlayerTextLabel(self, playerInfo.name);
   const otherTile = self.add.container(playerInfo.x, playerInfo.y,[otherPlayer,text,states]);
   otherTile.playerId = playerInfo.playerId;
@@ -413,11 +430,6 @@ function clearStates(){
   if(!manager.clearStatesMode){
     manager.clearStatesMode = true;
   }
-}
-// UNUSED
-function knockDownEnemy(enemy){
-  enemy.states.knockedDown = true
-  enemy.getAt(2).getAt(0).alpha=1;
 }
 // Change states of enemy.
 function changeEnemyStates(enemy, states){
@@ -498,7 +510,6 @@ function createEnemyHelper(x,y,size,id){
     sizeVal = 100;
   }
 
-  //enemy.setTint(colors['red']);
   // Order here is IMPORTANT until late code is added for layers.
   var states = createStates(sizeVal);
 
