@@ -563,7 +563,7 @@ function rollDice(diceForm){
 }
 function updateDiceOutcomes(roll, roller_name){
   var innerhtml = document.getElementById("dice_outcomes").innerHTML;
-  var str = `<li><b>${roller_name}</b> rolled ${roll.outcome}! | Rolls: ${JSON.stringify(roll.rollsOutcomes)}+${roll.fixedAdd}</li>${innerhtml}`;
+  var str = `<li><b>${roller_name}</b> rolled ${roll.outcome}! <b>|</b> Rolls: ${JSON.stringify(roll.rollsOutcomes)}+${roll.fixedAdd} <b>|</b> (${roll.diceString})</li>${innerhtml}`;
   document.getElementById("dice_outcomes").innerHTML = str;
 }
 // ----- END MISC FUNCTIONS ----- //

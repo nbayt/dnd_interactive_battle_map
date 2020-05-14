@@ -2,12 +2,13 @@
 // EG: 4d8+1+2d6 and get a roll for that dice equation.
 // Returns 0 if you give it something bad, give it something it can parse and you get a number.
 function DICE_rollDice(diceString){
-  const defaultResponse = {outcome: -1, rolls: [], rollsOutcomes: [], fixedAdd: -1};
+  const defaultResponse = {outcome: -1, rolls: [], rollsOutcomes: [], fixedAdd: -1, diceString: '悪い人だなあ。。。'};
   if(diceString.length>200){ // NO //
     return(defaultResponse);
   }
   try{
-    diceString = cleanDiceString(diceString);
+    diceString = DICE_cleanDiceString(diceString);
+    if(diceString.length == 0){return(defaultResponse);}
     var outcome = 0;
     var diceRolls = [];
     var diceRollsOutcomes = [];
@@ -16,11 +17,20 @@ function DICE_rollDice(diceString){
     diceParts.forEach(function(dice){
       var c_s = dice.split('d');
       if(c_s.length==1){
-        fixedAdd+=parseInt(c_s);
+        if(c_s[0].length != 0){
+          fixedAdd+=parseInt(c_s[0]);
+        }
       }
       else{
-        for(var i=0;i<parseInt(c_s[0]);i++){
-          diceRolls.push(parseInt(c_s[1]));
+        if(c_s.length == 2 && c_s[1].length == 0){
+          if(c_s[0].length != 0){
+            fixedAdd+=parseInt(c_s[0]);
+          }
+        }
+        else{
+          for(var i=0;i<parseInt(c_s[0]);i++){
+            diceRolls.push(parseInt(c_s[1]));
+          }
         }
       }
     });
@@ -30,15 +40,19 @@ function DICE_rollDice(diceString){
       diceRollsOutcomes.push(roll);
     })
     outcome += fixedAdd
-    return({outcome: outcome, rolls: diceRolls, rollsOutcomes: diceRollsOutcomes, fixedAdd: fixedAdd});
+    return({outcome: outcome, rolls: diceRolls, rollsOutcomes: diceRollsOutcomes, fixedAdd: fixedAdd, diceString:diceString});
   }
   catch(e){ // Just in case
     return(defaultResponse);
   }
 }
 
-function cleanDiceString(diceString){
+function DICE_cleanDiceString(diceString){
   diceString = diceString.toLowerCase();
   diceString = diceString.replace(/[^\+\-0-9d]/g,''); // ようくない文字を外す
+
+  diceString = diceString.replace(/[\-]+/g,'-');
+  diceString = diceString.replace(/[d]+/g,'d');
+  diceString = diceString.replace(/[\+]+/g,'+');
   return(diceString);
 }
