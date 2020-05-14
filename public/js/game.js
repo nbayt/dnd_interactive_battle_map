@@ -388,6 +388,9 @@ function createPlayerTextLabel(self, label){
 // Client Tools.
 function updateName(form){
   var new_name = form[0].value
+  if (new_name.length > 200){
+    return;
+  }
   manager.tile.getAt(1).text = new_name;
   manager.socket.emit('playerNameUpdate',{name: new_name});
 }
