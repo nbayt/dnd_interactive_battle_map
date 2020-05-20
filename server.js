@@ -83,10 +83,10 @@ function getNewToken(oAuth2Client, callback) {
     });
   });
 }
-
 /*
   End of code grabbed from https://developers.google.com/sheets/api/quickstart/nodejs
 */
+
 function readCharsFromSheet(auth){
   var promise = new Promise(async function(resolve, reject){
     try{

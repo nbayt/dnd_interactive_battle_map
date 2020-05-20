@@ -85,7 +85,7 @@ function create() {
   console.log(`Is DM = ${DM}`);
   var self = this;
   manager = this;
-  this.add.image(0, -100, 'bg').setOrigin(0).setScale(0.45);
+  this.add.image(0, 0, 'bg').setOrigin(0).setScale(0.45);
   this.socket = io();
 
   // For client storage.
@@ -208,6 +208,7 @@ function create() {
       innerhtml+=`<li>${char}: ${data[char]}</li>`
     });
     document.getElementById("char_ac_list").innerHTML = innerhtml;
+    document.getElementById('char_data_title').innerHTML = 'Character Data'
   });
 
   this.socket.on('disconnect', function (playerId) {
@@ -219,27 +220,14 @@ function create() {
   });
 
   // DM Input Commands
-  // ----- WIP ----- //
-  if(DM && false){
-    this.input.keyboard.on('keydown-B', function(){
-      keyStatesDM.b = true;
-      if(keyStatesDM.mDown){
-        if(!keyStatesDM.box){
-          keyStatesDM.box = this.physics.add.image(0,0, 'green_box').setOrigin(0.5,0.5).setDisplaySize(40, 40);
-          //keyStatesDM.box.setDisplaySize()
-        }
-      }
-
-    }, this);
+  if(DM){
+    /*
+    this.input.keyboard.on('keydown-B', function(){}, this);
+    */
     this.input.keyboard.on('keyup-B', function(){
-      keyStatesDM.b = false;
+      drawMode();
     }, this);
   }
-  // ----- END WIP ----- //
-
-  // Client input callbacks.
-  //this.input.keyboard.on('keydown-A', function(){}, this);
-  //this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
   this.input.on('pointerdown', function(pointer){
     if(this.tile && distance(this.tile.x,pointer.x,this.tile.y,pointer.y)<PLAYERSIZE){
@@ -249,55 +237,72 @@ function create() {
       keyStatesDM.mDown = true;
       keyStatesDM.mX = pointer.x;
       keyStatesDM.mY = pointer.y;
-      // Code to handle DM modification of enemy state and other variables.
-      for(var i=0;i<manager.enemies.getChildren().length;i++){
-        var enemy = manager.enemies.getChildren()[i];
-        if(distance(enemy.x,pointer.x,enemy.y,pointer.y)<enemy.sizeVal){
-          if(manager.deleteMode){
-            manager.deleteMode=false;
-            var id = enemy.id;
-            enemy.destroy();
-            manager.socket.emit('enemyDelete',{enemyId: id});
-          }
-          else if(manager.knockDownMode){ // Check if knockdown toggle is active.
-            manager.knockDownMode = false;
-            changeEnemyStates(enemy, {knockedDown: true, incaped: enemy.states.incaped});
-            manager.socket.emit('enemyChangeState', {enemyId: enemy.id, states: enemy.states});
-          }
-          else if(manager.incapMode){ // Check if knockdown toggle is active.
-            manager.incapMode = false;
-            changeEnemyStates(enemy, {knockedDown: enemy.states.knockedDown, incaped: true});
-            manager.socket.emit('enemyChangeState', {enemyId: enemy.id, states: enemy.states});
-          }
-          else if(manager.clearStatesMode){ // Check if clear states toggle is active.
-            manager.clearStatesMode = false;
-            changeEnemyStates(enemy, {knockedDown: false, incaped:false});
-            manager.socket.emit('enemyChangeState', {enemyId: enemy.id, states: enemy.states});
-          }
-          enemy.followMouse = true;
-          break;
+      // First we check if any button modifiers are active.
+      if(manager.mode === 'draw'){
+        if(keyStatesDM.mouseStartDirty){
+          keyStatesDM.mouseStartDirty = false;
+          keyStatesDM.mouseStartX = pointer.x;
+          keyStatesDM.mouseStartY = pointer.y;
         }
       }
-      // Code to handle DM modification of player state and other variables.
-      for(var i=0; i<manager.otherPlayers.getChildren().length;i++){
-        var player = manager.otherPlayers.getChildren()[i];
-        if(distance(player.x,pointer.x,player.y,pointer.y)<PLAYERSIZE){
-          if(manager.knockDownMode){ // Check if knockdown toggle is active.
-            manager.knockDownMode = false;
-            changePlayerStates(player,{knockedDown: true, incaped: player.states.incaped});
-            manager.socket.emit('playerChangeState', {playerId: player.playerId, states: player.states});
+      else{
+        // Code to handle DM modification of enemy state and other variables.
+        for(var i=0;i<manager.enemies.getChildren().length;i++){
+          var enemy = manager.enemies.getChildren()[i];
+          if(distance(enemy.x,pointer.x,enemy.y,pointer.y)<enemy.sizeVal){
+            if(manager.mode === 'delete'){
+              manager.mode='none';
+              var id = enemy.id;
+              enemy.destroy();
+              manager.socket.emit('enemyDelete',{enemyId: id});
+              setModeHTML('None');
+            }
+            else if(manager.mode === 'knockdown'){ // Check if knockdown toggle is active.
+              manager.mode = 'none';
+              setModeHTML('None');
+              changeEnemyStates(enemy, {knockedDown: true, incaped: enemy.states.incaped});
+              manager.socket.emit('enemyChangeState', {enemyId: enemy.id, states: enemy.states});
+            }
+            else if(manager.mode === 'incap'){ // Check if knockdown toggle is active.
+              manager.mode = 'none';
+              changeEnemyStates(enemy, {knockedDown: enemy.states.knockedDown, incaped: true});
+              manager.socket.emit('enemyChangeState', {enemyId: enemy.id, states: enemy.states});
+              setModeHTML('None');
+            }
+            else if(manager.mode === 'clearstates'){ // Check if clear states toggle is active.
+              manager.mode = 'none';
+              changeEnemyStates(enemy, {knockedDown: false, incaped:false});
+              manager.socket.emit('enemyChangeState', {enemyId: enemy.id, states: enemy.states});
+              setModeHTML('None');
+            }
+            enemy.followMouse = true;
+            break;
           }
-          if(manager.incapMode){ // Check if incap toggle is active.
-            manager.incapMode = false;
-            changePlayerStates(player,{knockedDown: player.states.incaped, incaped: true});
-            manager.socket.emit('playerChangeState', {playerId: player.playerId, states: player.states});
+        }
+        // Code to handle DM modification of player state and other variables.
+        for(var i=0; i<manager.otherPlayers.getChildren().length;i++){
+          var player = manager.otherPlayers.getChildren()[i];
+          if(distance(player.x,pointer.x,player.y,pointer.y)<PLAYERSIZE){
+            if(manager.mode === ' knockdown'){ // Check if knockdown toggle is active.
+              manager.mode = 'none';
+              changePlayerStates(player,{knockedDown: true, incaped: player.states.incaped});
+              manager.socket.emit('playerChangeState', {playerId: player.playerId, states: player.states});
+              setModeHTML('None');
+            }
+            if(manager.mode === 'incap'){ // Check if incap toggle is active.
+              manager.mode = 'none';
+              changePlayerStates(player,{knockedDown: player.states.incaped, incaped: true});
+              manager.socket.emit('playerChangeState', {playerId: player.playerId, states: player.states});
+              setModeHTML('None');
+            }
+            else if(manager.mode === 'clearstates'){ // Check if clear states toggle is active.
+              manager.mode = 'none';
+              changePlayerStates(player,{knockedDown: false, incaped: false});
+              manager.socket.emit('playerChangeState', {playerId: player.playerId, states: player.states});
+              setModeHTML('None');
+            }
+            // break; <--- これは必要ですか？
           }
-          else if(manager.clearStatesMode){ // Check if clear states toggle is active.
-            manager.clearStatesMode = false;
-            changePlayerStates(player,{knockedDown: false, incaped: false});
-            manager.socket.emit('playerChangeState', {playerId: player.playerId, states: player.states});
-          }
-          // break; <--- これは必要ですか？
         }
       }
     }
@@ -305,6 +310,12 @@ function create() {
   this.input.on('pointerup',function(pointer){
     if(DM){
       keyStatesDM.mDown = false;
+      keyStatesDM.mouseStartDirty = true;
+      if(manager.mode === 'draw'){
+        keyStatesDM.mouseEndX = pointer.x;
+        keyStatesDM.mouseEndY = pointer.y;
+        createTile(keyStatesDM.mouseStartX, keyStatesDM.mouseStartY, keyStatesDM.mouseEndX, keyStatesDM.mouseEndY);
+      }
     }
     if(this.tile){
       this.tile.followMouse = false;
@@ -326,6 +337,7 @@ function create() {
     }
   }, this);
 }
+
 function update() {
   if (this.tile) {
     var x = this.tile.x;
@@ -411,27 +423,47 @@ function hideEnemies(){
 function showEnemies(){
   manager.socket.emit('setEnemyVisibility',{alpha:1.0});
 }
-// Knock down enemy
-function knockDown(){
-  if(!manager.knockDownMode){
-    manager.knockDownMode = true;
+// Draw Mode
+function drawMode(){
+  if(manager.mode !== 'draw'){
+    manager.mode = 'draw';
+    setModeHTML('Draw Mode');
   }
   else{
-    manager.knockDownMode = false;
+    manager.mode = 'none';
+    setModeHTML('None');
+  }
+}
+// Knock down enemy
+function knockDown(){
+  if(manager.mode !== 'knockdown'){
+    manager.mode = 'knockdown';
+    setModeHTML('Knock Down Mode');
+  }
+  else{
+    manager.mode = 'none';
+    setModeHTML('None');
   }
 }
 function incap(){
-  if(!manager.incapMode){
-    manager.incapMode = true;
+  if(manager.mode !== 'incap'){
+    manager.mode = 'incap';
+    setModeHTML('Incap Mode');
   }
   else{
-    manager.incapMode = false;
+    manager.mode = 'none';
+    setModeHTML('None');
   }
 }
 // Clear States.
 function clearStates(){
-  if(!manager.clearStatesMode){
-    manager.clearStatesMode = true;
+  if(manager.mode !== 'clearstates'){
+    manager.mode = 'clearstates';
+    setModeHTML('Clear States Mode');
+  }
+  else{
+    manager.mode = 'none';
+    setModeHTML('None');
   }
 }
 // Change states of enemy.
@@ -468,13 +500,21 @@ function changePlayerStates(player, states){
 }
 // Toggle delete mode.
 function deleteEnemy(){
-  if(!manager.deleteMode){
-    manager.deleteMode = true;
+  if(manager.mode !== 'delete'){
+    manager.mode = 'delete';
+    setModeHTML('Delete Mode');
   }
   else{
-    manager.deleteMode=false;
+    manager.mode='none';
+    setModeHTML('None');
   }
 }
+// Create Green Tile
+function createTile(x1,y1,x2,y2){
+  manager.box = manager.physics.add.image(x1,y1, 'green_box').setOrigin(0,0).setDisplaySize(x2-x1, y2-y1);
+  //manager.box.setDisplaySize()
+}
+
 // Create an enemy at the given x,y position.
 function createEnemy(x,y,size){
   var id = nextEnemyID;
@@ -550,7 +590,11 @@ function setMap(form){
 }
 // Grab latest data from spreadsheet.
 function getCharAC(){
+  document.getElementById('char_data_title').innerHTML = 'Fetching Character Data';
   manager.socket.emit('getCharAC',{});
+}
+function setModeHTML(mode){
+  this.document.getElementById('mode_title').innerHTML = `Current Mode: ${mode}`;
 }
 // End DM Tools.
 

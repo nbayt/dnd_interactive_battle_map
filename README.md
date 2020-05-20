@@ -10,7 +10,7 @@ Follow the instructions [here](https://developers.google.com/sheets/api/quicksta
  - [x] User tools and interface.
  - [x] DM page for admin usage.
  - [ ] CSS.
- - [ ] Add George the snake.
+ - [x] Add George the snake.
 
 ### TODO - Smaller Steps
  - User Tools

@@ -36,12 +36,13 @@
 
     <body>
         <h1>D&D Battle Board - DM Page</h1>
-        <h2>Eugenics is so yesterday, Slavery is IN now ~ Owen</h2>
+        <h2 id="motd_title"></h2>
         <noscript>Please enable JavaScript to run this app.</noscript>
         <div id="wrapper">
           <div id="game"></div>
           <div id="ui">
             <div>
+              <h2 id='mode_title'>Current Mode: None</h2>
               <h2>Controls</h2>
               <form action="javascript:;" onsubmit="updateName(this)">
                 <label for="update_name">Update name:</label>
@@ -75,7 +76,7 @@
               <button type="button" name="clear_states" onclick="clearStates()">Clear States</button><br>
             </div>
             <div>
-              <h2>Charater Data</h2>
+              <h2 id="char_data_title">Charater Data</h2>
               <ul id="char_ac_list"></ul>
               <button type="button" name="get_char_ac" onclick="getCharAC()">Get Character(s) AC</button>
             </div><br>
@@ -92,6 +93,6 @@
         <script>const DM = true;</script>
         <script src="js/dice.js"></script>
         <script src="js/game.js"></script>
-
+        <script src="js/motd.js"></script>
     </body>
 </html>
