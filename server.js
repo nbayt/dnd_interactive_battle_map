@@ -8,8 +8,9 @@ var charsData = {};
 const port = 25565;
 var AUTH;
 
-var players = {}
-var dmEnemies = {}
+var players = {};
+var dmEnemies = {};
+var dmDrawings = {};
 
 /*
   Code was grabbed from the following URL and slightly modified to fit application.
@@ -220,6 +221,7 @@ io.on('connection', function (socket) {
     console.log(JSON.stringify(data));
     socket.broadcast.emit('playerStateChanged', data);
   });
+  // Handle dm drawings here
   // End DM Updates
 
   // Basic relay socket to handle client to client messaging
