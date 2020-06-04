@@ -162,6 +162,7 @@ io.on('connection', function (socket) {
   // Send the players object to the new player.
   socket.emit('currentPlayers', players);
   socket.emit('currentDMEnemies', dmEnemies);
+  socket.emit('currentDrawings', dmDrawings);
   // Update all other players of the new player.
   socket.broadcast.emit('newPlayer', players[socket.id]);
   // End new player creation.
@@ -203,10 +204,14 @@ io.on('connection', function (socket) {
     socket.broadcast.emit('enemyUpdated', dmEnemies[enemyData.id]);
   });
   socket.on('enemyDelete', function(enemyData){
-    toDelete = dmEnemies[enemyData.enemyId];
     delete dmEnemies[enemyData.enemyId];
     socket.broadcast.emit('enemyDeleted', {id: enemyData.enemyId});
     console.log(`Enemy ${enemyData.enemyId} deleted.`);
+  });
+  socket.on('deleteAllEnemies', function(data){
+    dmEnemies = [];
+    socket.broadcast.emit('allEnemiesDeleted', data);
+    console.log(`DM Deleted all enemies.`);
   });
   socket.on('setEnemyVisibility', function(data){
     socket.broadcast.emit('setEnemyVisibility', data);
@@ -216,12 +221,29 @@ io.on('connection', function (socket) {
     console.log(JSON.stringify(data));
     socket.broadcast.emit('enemyStateChanged', data);
   });
+
   socket.on('playerChangeState', function(data){
     players[data.playerId].states = data.states;
     console.log(JSON.stringify(data));
     socket.broadcast.emit('playerStateChanged', data);
   });
+
   // Handle dm drawings here
+  socket.on('drawingCreate', function(data){
+    dmDrawings[data.id] = data;
+    console.log(`DM created a new drawing.`);
+    socket.broadcast.emit('drawingCreated',data);
+  });
+  socket.on('drawingDelete', function(data){
+    delete dmDrawings[data.drawingId];
+    socket.broadcast.emit('drawingDeleted', data);
+    console.log(`DM Deleted drawing #${data.drawingId}.`);
+  });
+  socket.on('deleteAllDrawings', function(data){
+    dmDrawings = [];
+    socket.broadcast.emit('allDrawingsDeleted', data);
+    console.log(`DM Deleted all drawings.`);
+  });
   // End DM Updates
 
   // Basic relay socket to handle client to client messaging

@@ -26,6 +26,7 @@
                 <select id="update_color"></select>
                 <input type="submit" value="Update">
               </form>
+
               <h2>DM Controls</h2>
               <form action="javascript:;" onsubmit="setMap(this)">
                 <label for="set_map">Set Map:</label>
@@ -45,19 +46,34 @@
               <button type="button" name="delete_enemy" onclick="deleteEnemy()">Delete Enemy</button>
               <button type="button" name="knock_down" onclick="knockDown()">Knock Down</button>
               <button type="button" name="incap" onclick="incap()">Incap</button>
-              <button type="button" name="clear_states" onclick="clearStates()">Clear States</button><br>
+              <button type="button" name="clear_states" onclick="clearStates()">Clear States</button>
+              <h3>Drawing Tools</h3>
+              Box - Press B<br>
+              Circle - Press C (TODO)<br>
+              <button type="button" name="delete_drawing" onclick="deleteDrawing()">Delete Drawing</button><br>
+              <form action="javascript:;" onsubmit="">
+                <label for="drawing_color">Drawing Color:</label>
+                <select id="drawing_color"></select>
+              </form>
+
+              <h2>CLEANUP</h2>
+              <button type="button" name="clear_all_drawings" onclick="deleteAllDrawings()">Clear All Drawings</button>
+              <button type="button" name="clear_all_enemies" onclick="deleteAllEnemies()">Clear All Enemies</button>
             </div>
+
             <div>
               <h2 id="char_data_title">Charater Data</h2>
               <ul id="char_ac_list"></ul>
               <button type="button" name="get_char_ac" onclick="getCharAC()">Get Character(s) AC</button>
             </div><br>
+
             <form action="javascript:;" onsubmit="rollDice(this)">
               <label for="dice_string">Dice Input:</label>
               <input type="text" id="dice_string">
               <input type="submit" value="Roll!">
             </form>
             <ul id="dice_outcomes"></ul>
+
           </div>
         </div>
         <script src="/socket.io/socket.io.js"></script>

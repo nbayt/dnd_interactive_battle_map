@@ -22,6 +22,7 @@ var config = {
 var game = new Phaser.Game(config);
 var manager; // To add global ref. !VERY SAFE! :ok_handSign:
 var nextEnemyID = 0;
+var nextDrawingID = 0;
 var keyStatesDM = {};
 
 // ----- Color selection ----- //
@@ -52,6 +53,7 @@ Object.keys(colors).forEach(color_key=>{
   console.log(final_str);
 });
 document.getElementById('update_color').innerHTML = html_str;
+document.getElementById('drawing_color').innerHTML = html_str;
 // ----- End color selection ----- //
 
 function preload() {
@@ -69,7 +71,7 @@ function preload() {
   this.load.image('state_knocked_down', 'assets/state_knocked_down.png');
   this.load.image('state_incap', 'assets/state_incap.png');
 
-  this.load.image('green_box', 'assets/green_box.png');
+  this.load.image('box', 'assets/box.png');
 
   // Setup map list TODO
   if(DM){
@@ -91,6 +93,7 @@ function create() {
   // For client storage.
   this.otherPlayers = this.physics.add.group();
   this.enemies = this.physics.add.group();
+  this.drawings = this.physics.add.group();
 
   // Init all current players.
   this.socket.on('currentPlayers', function(players){
@@ -147,6 +150,40 @@ function create() {
       });
     }
   });
+  this.socket.on('drawingCreated',function(data){
+    if(data.type == 'box'){
+      createBoxDrawingHelper(data);
+    }
+    else{
+      console.log('Unsupported drawing type.');
+    }
+  });
+  this.socket.on('currentDrawings', function(data){
+    if(data){
+      Object.keys(data).forEach(function(id){
+        var drawing = data[id];
+        if(drawing.type === 'box'){
+          createBoxDrawingHelper(drawing);
+        }
+        else{
+          console.log('Unsupported Drawing type.');
+        }
+      })
+    }
+  });
+  this.socket.on('drawingDeleted', function(data){
+    self.drawings.getChildren().forEach(function(drawing){
+      if(drawing.id == data.drawingId){
+        drawing.destroy();
+      }
+    });
+  });
+  this.socket.on('allDrawingsDeleted', function(data){
+    while(self.drawings.getChildren().length>0){
+      self.drawings.getChildren()[0].destroy();
+    }
+    nextDrawingID = 0;
+  });
   this.socket.on('enemyCreated',function(enemyInfo){
     if(!DM){
       var enemy_container = createEnemyHelper(enemyInfo.x, enemyInfo.y, enemyInfo.size, enemyInfo.id);
@@ -178,6 +215,12 @@ function create() {
         enemy.destroy();
       }
     });
+  });
+  this.socket.on('allEnemiesDeleted', function(data){
+    while(self.enemies.getChildren().length>0){
+      self.enemies.getChildren()[0].destroy();
+    }
+    nextEnemyID = 0;
   });
   this.socket.on('setEnemyVisibility', function(data){
     if(!DM) {
@@ -304,6 +347,20 @@ function create() {
             // break; <--- これは必要ですか？
           }
         }
+        if(manager.mode === 'deletedrawing'){
+          for(var i=0; i<manager.drawings.getChildren().length;i++){
+            var drawing = manager.drawings.getChildren()[i];
+            if(drawing.type === 'box'){
+              if(pointer.x >= drawing.left && pointer.x <= drawing.right && pointer.y >= drawing.top && pointer.y <= drawing.bottom){
+                drawing.destroy();
+                manager.socket.emit('drawingDelete',{drawingId: drawing.id});
+                manager.mode = 'none';
+                setModeHTML('None');
+                break;
+              }
+            }
+          }
+        }
       }
     }
   }, this);
@@ -314,7 +371,7 @@ function create() {
       if(manager.mode === 'draw'){
         keyStatesDM.mouseEndX = pointer.x;
         keyStatesDM.mouseEndY = pointer.y;
-        createTile(keyStatesDM.mouseStartX, keyStatesDM.mouseStartY, keyStatesDM.mouseEndX, keyStatesDM.mouseEndY);
+        createBoxDrawing(keyStatesDM.mouseStartX, keyStatesDM.mouseStartY, keyStatesDM.mouseEndX, keyStatesDM.mouseEndY);
       }
     }
     if(this.tile){
@@ -509,10 +566,54 @@ function deleteEnemy(){
     setModeHTML('None');
   }
 }
-// Create Green Tile
-function createTile(x1,y1,x2,y2){
-  manager.box = manager.physics.add.image(x1,y1, 'green_box').setOrigin(0,0).setDisplaySize(x2-x1, y2-y1);
-  //manager.box.setDisplaySize()
+function deleteAllEnemies(){
+  while(manager.enemies.getChildren().length>0){
+    manager.enemies.getChildren()[0].destroy();
+  }
+  nextEnemyID = 0;
+  manager.socket.emit('deleteAllEnemies',{});
+}
+// Create Box Drawing
+function createBoxDrawing(x1,y1,x2,y2){
+  var drawingData = {
+    id: nextDrawingID,
+    x1: x1, x2: x2,
+    y1: y1, y2: y2,
+    type: 'box',
+    color: document.getElementById('drawing_color').value
+  };
+  manager.socket.emit('drawingCreate',drawingData);
+  createBoxDrawingHelper(drawingData)
+  nextDrawingID += 1;
+}
+function createBoxDrawingHelper(drawingData){
+  var box = manager.physics.add.image(drawingData.x1,drawingData.y1, 'box').setOrigin(0,0).setDisplaySize(drawingData.x2-drawingData.x1, drawingData.y2-drawingData.y1);
+  box.setTint(colors[drawingData.color]);
+  box.id = drawingData.id;
+  box.left = Math.min(drawingData.x1, drawingData.x2);
+  box.right = Math.max(drawingData.x1, drawingData.x2);
+  box.top = Math.min(drawingData.y1, drawingData.y2);
+  box.bottom = Math.max(drawingData.y1, drawingData.y2);
+  box.type = 'box';
+  manager.drawings.add(box);
+}
+function deleteDrawing(){
+  if(manager.mode !== 'deletedrawing'){
+    manager.mode = 'deletedrawing';
+    setModeHTML('Delete Drawing Mode');
+  }
+  else{
+    manager.mode='none';
+    setModeHTML('None');
+  }
+}
+function deleteAllDrawings(){
+  while(manager.drawings.getChildren().length>0){
+    manager.drawings.getChildren()[0].destroy();
+  }
+  //manager.drawings = manager.physics.add.group();
+  nextDrawingID = 0;
+  manager.socket.emit('deleteAllDrawings',{});
 }
 
 // Create an enemy at the given x,y position.
