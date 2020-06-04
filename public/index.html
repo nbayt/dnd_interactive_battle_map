@@ -4,38 +4,12 @@
     <head>
         <meta charset="utf-8">
         <title>DnD Battle Board</title>
-        <style>
-          html,
-          body {
-            margin: 0 auto;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-          }
-
-          #wrapper {
-            width:2000;
-            border: 1px solid black;
-            overflow: hidden;
-          }
-
-          #game {
-            margin: 10px ;
-            padding: 0;
-            width: 1548px;
-            height: 1546px;
-            float: left;
-          }
-
-          #ui {
-            border: 1px dashed black;
-            overflow: hidden;
-          }
-        </style>
+        <link rel="stylesheet" href="styles/style.css">
     </head>
 
     <body>
         <h1>D&D Battle Board</h1>
+        <h2 id="motd_title"></h2>
         <noscript>Please enable JavaScript to run this app.</noscript>
         <div id="wrapper">
           <div id="game"></div>
@@ -48,22 +22,23 @@
             </form>
             <form action="javascript:;" onsubmit="updateColor(this)">
               <label for="update_color">Update color:</label>
-              <select id="update_color">
-                <option value="blue">Blue</option>
-                <option value="green">Green</option>
-                <option value="orange">Orange</option>
-                <option value="light_blue">Light Blue</option>
-                <option value="yellow">Yellow</option>
-                <option value="pink">Pink</option>
-              </select>
+              <select id="update_color"></select>
               <input type="submit" value="Update">
+            </form><br>
+            <form action="javascript:;" onsubmit="rollDice(this)">
+              <label for="dice_string">Dice Input:</label>
+              <input type="text" id="dice_string">
+              <input type="submit" value="Roll!">
             </form>
+            <ul id="dice_outcomes"></ul>
           </div>
         </div>
         <script src="/socket.io/socket.io.js"></script>
         <script src="//cdn.jsdelivr.net/npm/phaser@3.23.0/dist/phaser.min.js"></script>
-        <script src="js/game.js"></script>
         <script>const DM = false;</script>
+        <script src="js/dice.js"></script>
+        <script src="js/game.js"></script>
+        <script src="js/motd.js"></script>
     </body>
 
 </html>

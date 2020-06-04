@@ -3,77 +3,84 @@
     <head>
         <meta charset="utf-8">
         <title>DnD Battle Board - DM</title>
-        <style>
-          html,
-          body {
-            margin: 0 auto;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-          }
-
-          #wrapper {
-            width:2000;
-            border: 1px solid black;
-            overflow: hidden;
-          }
-
-          #game {
-            margin: 10px ;
-            padding: 0;
-            width: 1548px;
-            height: 1546px;
-            float: left;
-          }
-
-          #ui {
-            border: 1px dashed black;
-            overflow: hidden;
-          }
-        </style>
+        <link rel="stylesheet" href="styles/style.css">
     </head>
 
     <body>
         <h1>D&D Battle Board - DM Page</h1>
+        <h2 id="motd_title"></h2>
         <noscript>Please enable JavaScript to run this app.</noscript>
         <div id="wrapper">
           <div id="game"></div>
           <div id="ui">
-            <h2>Controls</h2>
-            <form action="javascript:;" onsubmit="updateName(this)">
-              <label for="update_name">Update name:</label>
-              <input type="text" id="update_name">
-              <input type="submit" value="Update">
+            <div>
+              <h2 id='mode_title'>Current Mode: None</h2>
+              <h2>Controls</h2>
+              <form action="javascript:;" onsubmit="updateName(this)">
+                <label for="update_name">Update name:</label>
+                <input type="text" id="update_name">
+                <input type="submit" value="Update">
+              </form>
+              <form action="javascript:;" onsubmit="updateColor(this)">
+                <label for="update_color">Update color:</label>
+                <select id="update_color"></select>
+                <input type="submit" value="Update">
+              </form>
+
+              <h2>DM Controls</h2>
+              <form action="javascript:;" onsubmit="setMap(this)">
+                <label for="set_map">Set Map:</label>
+                <select id="set_map">
+                  <option value="00">00</option>
+                </select>
+                <input type="submit" value="Update">
+              </form>
+              <button type="button" name="hide_all_enemies" onclick="hideEnemies()">Hide Enemies</button>
+              <button type="button" name="show_all_enemies" onclick="showEnemies()">Show Enemies</button><br>
+              <!-- TODO make this a drop down or something cleaner -->
+              <button type="button" name="create_enemy" onclick="createEnemy(500,500,'small')">Create Small Enemy</button>
+              <button type="button" name="create_enemy" onclick="createEnemy(500,500,'medium')">Create Medium Enemy</button>
+              <button type="button" name="create_enemy" onclick="createEnemy(500,500,'large')">Create Large Enemy</button>
+              <button type="button" name="create_enemy" onclick="createEnemy(500,500,'huge')">Create Huge Enemy</button><br>
+              <button type="button" name="create_enemy" onclick="createEnemy(500,500,'snake')">GEORGE!</button><br>
+              <button type="button" name="delete_enemy" onclick="deleteEnemy()">Delete Enemy</button>
+              <button type="button" name="knock_down" onclick="knockDown()">Knock Down</button>
+              <button type="button" name="incap" onclick="incap()">Incap</button>
+              <button type="button" name="clear_states" onclick="clearStates()">Clear States</button>
+              <h3>Drawing Tools</h3>
+              Box - Press B<br>
+              Circle - Press C (TODO)<br>
+              <button type="button" name="delete_drawing" onclick="deleteDrawing()">Delete Drawing</button><br>
+              <form action="javascript:;" onsubmit="">
+                <label for="drawing_color">Drawing Color:</label>
+                <select id="drawing_color"></select>
+              </form>
+
+              <h2>CLEANUP</h2>
+              <button type="button" name="clear_all_drawings" onclick="deleteAllDrawings()">Clear All Drawings</button>
+              <button type="button" name="clear_all_enemies" onclick="deleteAllEnemies()">Clear All Enemies</button>
+            </div>
+
+            <div>
+              <h2 id="char_data_title">Charater Data</h2>
+              <ul id="char_ac_list"></ul>
+              <button type="button" name="get_char_ac" onclick="getCharAC()">Get Character(s) AC</button>
+            </div><br>
+
+            <form action="javascript:;" onsubmit="rollDice(this)">
+              <label for="dice_string">Dice Input:</label>
+              <input type="text" id="dice_string">
+              <input type="submit" value="Roll!">
             </form>
-            <form action="javascript:;" onsubmit="updateColor(this)">
-              <label for="update_color">Update color:</label>
-              <select id="update_color">
-                <option value="blue">Blue</option>
-                <option value="green">Green</option>
-                <option value="orange">Orange</option>
-                <option value="light_blue">Light Blue</option>
-                <option value="yellow">Yellow</option>
-                <option value="pink">Pink</option>
-              </select>
-              <input type="submit" value="Update">
-            </form>
-            <h2>DM Controls</h2>
-            <form action="javascript:;" onsubmit="setMap(this)">
-              <label for="set_map">Set Map:</label>
-              <select id="set_map">
-                <option value="00">00</option>
-              </select>
-              <input type="submit" value="Update">
-            </form>
-            <button type="button" name="hide_all_enemies" onclick="hideEnemies()">Hide Enemies</button>
-            <button type="button" name="show_all_enemies" onclick="showEnemies()">Show Enemies</button><br>
-            <button type="button" name="create_enemy" onclick="createEnemy(80,80,'medium')">Create Enemy</button>
-            <button type="button" name="delete_enemy" onclick="deleteEnemy()">Delete Enemy</button><br>
+            <ul id="dice_outcomes"></ul>
+
           </div>
         </div>
         <script src="/socket.io/socket.io.js"></script>
         <script src="//cdn.jsdelivr.net/npm/phaser@3.23.0/dist/phaser.min.js"></script>
+        <script>const DM = true;</script>
+        <script src="js/dice.js"></script>
         <script src="js/game.js"></script>
-        <script src="js/dm.js"></script>
+        <script src="js/motd.js"></script>
     </body>
 </html>
