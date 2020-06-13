@@ -30,9 +30,7 @@
               <h2>DM Controls</h2>
               <form action="javascript:;" onsubmit="setMap(this)">
                 <label for="set_map">Set Map:</label>
-                <select id="set_map">
-                  <option value="00">00</option>
-                </select>
+                <select id="set_map"></select>
                 <input type="submit" value="Update">
               </form>
               <button type="button" name="hide_all_enemies" onclick="hideEnemies()">Hide Enemies</button>
@@ -49,8 +47,8 @@
               <button type="button" name="clear_states" onclick="clearStates()">Clear States</button>
               <h3>Drawing Tools</h3>
               Box - Press B<br>
-              Circle - Press C (TODO)<br>
-              <button type="button" name="delete_drawing" onclick="deleteDrawing()">Delete Drawing</button><br>
+              Circle - Press C<br>
+              <button type="button" name="delete_drawing" onclick="deleteDrawing()">Delete Drawing</button> | Or Press D <br>
               <form action="javascript:;" onsubmit="">
                 <label for="drawing_color">Drawing Color:</label>
                 <select id="drawing_color"></select>

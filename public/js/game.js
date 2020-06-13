@@ -3,8 +3,8 @@ const PLAYERSIZE = 40;
 var config = {
   type: Phaser.AUTO,
   parent: 'game',
-  width: 1800,
-  height: 2500,
+  width: 1785,
+  height: 1900,
   physics: {
     default: 'arcade',
     arcade: {
@@ -40,7 +40,6 @@ const colors = {
 //  'red': 0xFF0000
 }
 
-// TODO cleanup naming.
 var html_str = '';
 Object.keys(colors).forEach(color_key=>{
   var color_str = color_key.replace(/[\_]/g,' ');
@@ -53,13 +52,31 @@ Object.keys(colors).forEach(color_key=>{
   console.log(final_str);
 });
 document.getElementById('update_color').innerHTML = html_str;
-document.getElementById('drawing_color').innerHTML = html_str;
+if(DM){ document.getElementById('drawing_color').innerHTML = html_str; }
 // ----- End color selection ----- //
+
+// ----- Map Selection ----- //
+const maps = {
+  'bg_00': 'assets/bg_00.png',
+  'boat_open_water': 'assets/BattleMapOpenWater.png',
+  'forest_heart': 'assets/bg_03.png',
+  'forest_crawl': 'assets/BattleMapForestCrawl.png'
+}
+
+if(DM){
+  var str = '';
+  Object.keys(maps).forEach(map_key=>{
+    str+=`<option value=${map_key}>${map_key}</option>`;
+  });
+  document.getElementById("set_map").innerHTML = str;
+}
+
+// ----- End Map Selection ----- //
 
 function preload() {
   // Preload images.
   this.load.image('char_base', 'assets/pawn.png')
-  this.load.image('bg', 'assets/bg_02.png');
+  this.load.image('bg', 'assets/bg_00.png');
 
   this.load.image('enemy_small', 'assets/enemy_small.png');
   this.load.image('enemy_medium', 'assets/enemy_medium.png');
@@ -72,22 +89,17 @@ function preload() {
   this.load.image('state_incap', 'assets/state_incap.png');
 
   this.load.image('box', 'assets/box.png');
+  this.load.image('circle', 'assets/circle.png');
 
   // Setup map list TODO
-  if(DM){
-    var str = '';
-    for(var i=0;i<5;i++){
-      str+=`<option value="0${i}">0${i}</option>`;
-    }
-    document.getElementById("set_map").innerHTML = str;
-  }
 }
 
 function create() {
   console.log(`Is DM = ${DM}`);
   var self = this;
   manager = this;
-  this.add.image(0, 0, 'bg').setOrigin(0).setScale(0.45);
+  this.map = this.add.image(0, 0, 'bg').setOrigin(0).setScale(0.45);
+  this.load.on('filecomplete', updateMap)
   this.socket = io();
 
   // For client storage.
@@ -154,6 +166,9 @@ function create() {
     if(data.type == 'box'){
       createBoxDrawingHelper(data);
     }
+    else if(data.type == 'circle'){
+      createCircleDrawingHelper(data);
+    }
     else{
       console.log('Unsupported drawing type.');
     }
@@ -162,8 +177,12 @@ function create() {
     if(data){
       Object.keys(data).forEach(function(id){
         var drawing = data[id];
+        if(!drawing){return;}
         if(drawing.type === 'box'){
           createBoxDrawingHelper(drawing);
+        }
+        else if(drawing.type == 'circle'){
+          createCircleDrawingHelper(drawing);
         }
         else{
           console.log('Unsupported Drawing type.');
@@ -237,6 +256,11 @@ function create() {
     });
   });
 
+  this.socket.on('mapSet',function(data){
+    console.log(data);
+    setMapClient(data.map);
+  });
+
   // Handle dice rolls
   this.socket.on('diceRoll', function(data){
     updateDiceOutcomes(data.roll, data.name);
@@ -264,16 +288,19 @@ function create() {
 
   // DM Input Commands
   if(DM){
-    /*
-    this.input.keyboard.on('keydown-B', function(){}, this);
-    */
     this.input.keyboard.on('keyup-B', function(){
-      drawMode();
+      drawMode('box');
+    }, this);
+    this.input.keyboard.on('keyup-C', function(){
+      drawMode('circle');
+    }, this);
+    this.input.keyboard.on('keyup-D', function(){
+      deleteDrawing();
     }, this);
   }
 
   this.input.on('pointerdown', function(pointer){
-    if(this.tile && distance(this.tile.x,pointer.x,this.tile.y,pointer.y)<PLAYERSIZE){
+    if(this.tile && distance(this.tile.x,pointer.x,this.tile.y,pointer.y)<PLAYERSIZE/1.5){
       this.tile.followMouse = true;
     }
     else if(DM){
@@ -281,7 +308,7 @@ function create() {
       keyStatesDM.mX = pointer.x;
       keyStatesDM.mY = pointer.y;
       // First we check if any button modifiers are active.
-      if(manager.mode === 'draw'){
+      if(manager.mode && manager.mode.includes('draw_')){
         if(keyStatesDM.mouseStartDirty){
           keyStatesDM.mouseStartDirty = false;
           keyStatesDM.mouseStartX = pointer.x;
@@ -292,7 +319,7 @@ function create() {
         // Code to handle DM modification of enemy state and other variables.
         for(var i=0;i<manager.enemies.getChildren().length;i++){
           var enemy = manager.enemies.getChildren()[i];
-          if(distance(enemy.x,pointer.x,enemy.y,pointer.y)<enemy.sizeVal){
+          if(distance(enemy.x,pointer.x,enemy.y,pointer.y)<enemy.sizeVal/2){
             if(manager.mode === 'delete'){
               manager.mode='none';
               var id = enemy.id;
@@ -325,7 +352,7 @@ function create() {
         // Code to handle DM modification of player state and other variables.
         for(var i=0; i<manager.otherPlayers.getChildren().length;i++){
           var player = manager.otherPlayers.getChildren()[i];
-          if(distance(player.x,pointer.x,player.y,pointer.y)<PLAYERSIZE){
+          if(distance(player.x,pointer.x,player.y,pointer.y)<PLAYERSIZE/1.5){
             if(manager.mode === ' knockdown'){ // Check if knockdown toggle is active.
               manager.mode = 'none';
               changePlayerStates(player,{knockedDown: true, incaped: player.states.incaped});
@@ -350,7 +377,7 @@ function create() {
         if(manager.mode === 'deletedrawing'){
           for(var i=0; i<manager.drawings.getChildren().length;i++){
             var drawing = manager.drawings.getChildren()[i];
-            if(drawing.type === 'box'){
+            if(drawing.type === 'box' || drawing.type === 'circle'){
               if(pointer.x >= drawing.left && pointer.x <= drawing.right && pointer.y >= drawing.top && pointer.y <= drawing.bottom){
                 drawing.destroy();
                 manager.socket.emit('drawingDelete',{drawingId: drawing.id});
@@ -368,10 +395,10 @@ function create() {
     if(DM){
       keyStatesDM.mDown = false;
       keyStatesDM.mouseStartDirty = true;
-      if(manager.mode === 'draw'){
+      if(manager.mode && manager.mode.includes('draw_')){
         keyStatesDM.mouseEndX = pointer.x;
         keyStatesDM.mouseEndY = pointer.y;
-        createBoxDrawing(keyStatesDM.mouseStartX, keyStatesDM.mouseStartY, keyStatesDM.mouseEndX, keyStatesDM.mouseEndY);
+          createDrawing(manager.drawType, keyStatesDM.mouseStartX, keyStatesDM.mouseStartY, keyStatesDM.mouseEndX, keyStatesDM.mouseEndY);
       }
     }
     if(this.tile){
@@ -481,10 +508,11 @@ function showEnemies(){
   manager.socket.emit('setEnemyVisibility',{alpha:1.0});
 }
 // Draw Mode
-function drawMode(){
-  if(manager.mode !== 'draw'){
-    manager.mode = 'draw';
-    setModeHTML('Draw Mode');
+function drawMode(type){
+  if(manager.mode !== 'draw_'+type){
+    manager.mode = 'draw_'+type;
+    manager.drawType = type;
+    setModeHTML('Draw Mode: '+type);
   }
   else{
     manager.mode = 'none';
@@ -574,16 +602,21 @@ function deleteAllEnemies(){
   manager.socket.emit('deleteAllEnemies',{});
 }
 // Create Box Drawing
-function createBoxDrawing(x1,y1,x2,y2){
+function createDrawing(type,x1,y1,x2,y2){
   var drawingData = {
     id: nextDrawingID,
     x1: x1, x2: x2,
     y1: y1, y2: y2,
-    type: 'box',
+    type: type,
     color: document.getElementById('drawing_color').value
   };
   manager.socket.emit('drawingCreate',drawingData);
-  createBoxDrawingHelper(drawingData)
+  if(type === 'box'){
+    createBoxDrawingHelper(drawingData)
+  }
+  else if(type === 'circle'){
+    createCircleDrawingHelper(drawingData);
+  }
   nextDrawingID += 1;
 }
 function createBoxDrawingHelper(drawingData){
@@ -596,6 +629,19 @@ function createBoxDrawingHelper(drawingData){
   box.bottom = Math.max(drawingData.y1, drawingData.y2);
   box.type = 'box';
   manager.drawings.add(box);
+}
+function createCircleDrawingHelper(drawingData){
+  var circle = manager.physics.add.image(drawingData.x1,drawingData.y1, 'circle').setOrigin(0,0).setDisplaySize(drawingData.x2-drawingData.x1, drawingData.y2-drawingData.y1);
+  circle.setTint(colors[drawingData.color]);
+  circle.id = drawingData.id;
+  circle.centerX = (drawingData.x1+drawingData.x2) / 2;
+  circle.centerY = (drawingData.y1+drawingData.y2) / 2;
+  circle.left = Math.min(drawingData.x1, drawingData.x2);
+  circle.right = Math.max(drawingData.x1, drawingData.x2);
+  circle.top = Math.min(drawingData.y1, drawingData.y2);
+  circle.bottom = Math.max(drawingData.y1, drawingData.y2);
+  circle.type = 'circle';
+  manager.drawings.add(circle);
 }
 function deleteDrawing(){
   if(manager.mode !== 'deletedrawing'){
@@ -683,12 +729,34 @@ function createStates(size){
   return(states);
 }
 
-// TODO
-// Many issues currently due to fact map is not a constant size and custom offsets are often needed.
+// Set Map Functions
 function setMap(form){
   var map = form[0].value;
-  console.log(map);
+  setMapClient(map);
+  manager.socket.emit('setMap',{map:map});
 }
+
+function setMapClient(map){
+  manager.map_str = map;
+  manager.map.destroy();
+  // If map is already loaded then swap to it.
+  if(manager.textures.exists(map)){
+    updateMap();
+  }
+  // Otherwise load it now.
+  else{
+    manager.load.image(map, maps[map]);
+    manager.load.start();
+  }
+}
+
+function updateMap(){
+  var map = manager.map_str;
+  console.log(`Changed map to ${map}.`);
+  manager.map = manager.add.image(0, 0, map).setOrigin(0).setScale(0.45);
+  manager.map.setDepth(-999);
+}
+
 // Grab latest data from spreadsheet.
 function getCharAC(){
   document.getElementById('char_data_title').innerHTML = 'Fetching Character Data';
@@ -703,6 +771,7 @@ function setModeHTML(mode){
 function rollDice(diceForm){
   var diceString = diceForm[0].value;
   var roll = DICE_rollDice(diceString);
+  console.log(roll);
   updateDiceOutcomes(roll, 'You');
   manager.socket.emit('relayMessage',{message:'diceRoll', data: {name: manager.tile.getAt(1).text, roll: roll}});
 }
