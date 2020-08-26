@@ -11,7 +11,7 @@ var AUTH;
 var players = {};
 var dmEnemies = {};
 var dmDrawings = {};
-var currentMap = 'forest_crawl';
+var currentMap = 'default';
 
 /*
   Code was grabbed from the following URL and slightly modified to fit application.

@@ -57,10 +57,14 @@ if(DM){ document.getElementById('drawing_color').innerHTML = html_str; }
 
 // ----- Map Selection ----- //
 const maps = {
+  'jimmy_barnes': 'assets/default_bg.png', //'assets/jimmy_barnes.png',
+  'default': 'assets/default_bg.png',
   'bg_00': 'assets/bg_00.png',
   'boat_open_water': 'assets/BattleMapOpenWater.png',
   'forest_heart': 'assets/bg_03.png',
-  'forest_crawl': 'assets/BattleMapForestCrawl.png'
+  'forest_crawl': 'assets/BattleMapForestCrawl.png',
+  'gondola': 'assets/BattleMapGondola.png',
+  'throne': 'assets/BattleMapThrone.png'
 }
 
 if(DM){
