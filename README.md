@@ -11,6 +11,7 @@ Follow the instructions [here](https://developers.google.com/sheets/api/quicksta
  - [x] DM page for admin usage.
  - [ ] CSS.
  - [x] Add George the snake.
+ - [ ] Add Zippo the pseudodragon
 
 ### TODO - Smaller Steps
  - User Tools
@@ -24,5 +25,5 @@ Follow the instructions [here](https://developers.google.com/sheets/api/quicksta
    - [x] Add enemies.
    - [x] Hide and show enemies.
    - [x] Delete Enemies.
-   - [ ] Draw circles and boxes for skill zones.
+   - [x] Draw circles and boxes for skill zones.
    - [x] Buff/debuff icons.

@@ -11,6 +11,7 @@ var AUTH;
 var players = {};
 var dmEnemies = {};
 var dmDrawings = {};
+var currentMap = 'default';
 
 /*
   Code was grabbed from the following URL and slightly modified to fit application.
@@ -143,7 +144,7 @@ app.get('/', function (req, res) {
 app.get('/dm', function (req, res) {
   res.sendFile(__dirname + '/public/dm.html');
 });
-// ----- BEGIN EXPRESS ROUTING ----- //
+// ----- END EXPRESS ROUTING ----- //
 
 io.on('connection', function (socket) {
   console.log('A user connected.');
@@ -163,6 +164,7 @@ io.on('connection', function (socket) {
   socket.emit('currentPlayers', players);
   socket.emit('currentDMEnemies', dmEnemies);
   socket.emit('currentDrawings', dmDrawings);
+  socket.emit('mapSet', {map: currentMap});
   // Update all other players of the new player.
   socket.broadcast.emit('newPlayer', players[socket.id]);
   // End new player creation.
@@ -245,6 +247,13 @@ io.on('connection', function (socket) {
     console.log(`DM Deleted all drawings.`);
   });
   // End DM Updates
+
+  // Map Stuff
+  socket.on('setMap', function(data){
+    currentMap = data.map;
+    socket.broadcast.emit('mapSet', data);
+    console.log(`DM changed map to ${data.map}.`);
+  });
 
   // Basic relay socket to handle client to client messaging
   socket.on('relayMessage', function(relayData){
