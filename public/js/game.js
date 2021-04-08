@@ -3,8 +3,8 @@ const PLAYERSIZE = 40;
 var config = {
   type: Phaser.AUTO,
   parent: 'game',
-  width: 1785,
-  height: 1900,
+  width: 1000,
+  height: 1000,
   physics: {
     default: 'arcade',
     arcade: {
@@ -64,7 +64,16 @@ const maps = {
   'forest_heart': 'assets/bg_03.png',
   'forest_crawl': 'assets/BattleMapForestCrawl.png',
   'gondola': 'assets/BattleMapGondola.png',
-  'throne': 'assets/BattleMapThrone.png'
+  'throne': 'assets/BattleMapThrone.png',
+  'narrow_pass': 'assets/BattleMapNarrowPass.png',
+  'base_ejier': 'assets/BattleMapBaseEjier.png',
+  'dawnpoint_area': 'assets/Dawnpoint_Map.png',
+  'grid': 'assets/grid.png',
+  'kitchen': 'assets/BattleMapKitchen.png',
+  'apothecary': 'assets/BattleMapApothecary.png',
+  'world_map': 'assets/Amaranth_Map.png',
+  'battleMapShop': 'assets/BattleMapShop.png',
+  'BattleMapHideout': 'assets/BattleMapHideout.png'
 }
 
 if(DM){
@@ -757,7 +766,7 @@ function setMapClient(map){
 function updateMap(){
   var map = manager.map_str;
   console.log(`Changed map to ${map}.`);
-  manager.map = manager.add.image(0, 0, map).setOrigin(0).setScale(0.45);
+  manager.map = manager.add.image(0, 0, map).setOrigin(0).setScale(1);
   manager.map.setDepth(-999);
 }
 
